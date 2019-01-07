@@ -11,6 +11,7 @@ The following open source software is used:
  - Flatbuffers (licensed under Apache V2)
  - ZeroMQ (licensed under LGPL V3)
  - Pugixml (licensed under MIT)
+ - Boost (licensed under Boost Software License)
 
 
 [German Aerospace Center (DLR)]: http://www.dlr.de/irs/en/
