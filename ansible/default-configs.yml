@@ -16,7 +16,5 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-  vars:
-    - config: config_0
   roles: 
     - { role: default-configs, tags: default-configs }

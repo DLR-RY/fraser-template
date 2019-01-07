@@ -15,8 +15,5 @@
 ---
 - hosts: all:!localhost
   gather_facts: no
-  remote_user: user
-  vars:
-    - remote_home_path: /home/{{ ansible_ssh_user }}
   roles:
     - { role: deployment, tags: deployment }

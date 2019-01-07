@@ -13,11 +13,24 @@
 # - 2018, Annika Ofenloch (DLR RY-AVS)
 
 ---
+  # -------------------------------------------------------
+  # Set up SSH agent
+  # ------------------------------------------------------- 
+- hosts: localhost
+  gather_facts: no
+  vars: 
+    - ssh_key: ~/.ssh/id_rsa
+  tasks:
+    - name: Set up SSH agent to avoid retyping passwords
+      command: ssh-agent bash
+    - name: Add SSH key
+      command: ssh-add {{ ssh_key }}
+
 - hosts: all
   become: True
   gather_facts: no
   vars: 
-    - ssh_user: user
+    - ssh_user: "{{ lookup('env', 'USER') }}"
     - zeromq_version: 4.2.3
     - zeromq_download_url: https://github.com/zeromq/libzmq/releases/download/v4.2.3/zeromq-4.2.3.tar.gz
     - zeromq_prefix: /usr/local

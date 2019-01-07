@@ -25,32 +25,23 @@
 
   # Create folders if they not exist
 - name: Check if resource/idl folders exists
-  file: path="../models/{{ item.name }}/resources/idl" state=directory
+  file: path="{{ item.path }}/resources/idl" state=directory
   loop: "{{ models }}"
-  when: item.name != "configuration_server"
-  
-  # -------------------------------------------------------
-  # Set up SSH agent
-  # ------------------------------------------------------- 
-- name: Set up SSH agent to avoid retyping passwords
-  command: ssh-agent bash
-  
-- name: Add SSH key
-  command: ssh-add ~/.ssh/id_rsa
+  when: 'not "configuration_server" in item.instances'
 
   # -------------------------------------------------------
   # All models have all available IDLs of the other models.
   # -------------------------------------------------------
 - name: Dissolve event-data dependencies between the models (fbs-files)
   copy:
-    src: "../models/{{ item.1.name }}/resources/idl/"
-    dest: "../models/{{ item.0.name }}/resources/idl/"
+    src: "{{ item.1.path }}/resources/idl/"
+    dest: "{{ item.0.path }}/resources/idl/"
   with_nested:
     - "{{ models }}"
     - "{{ models }}"
-  when: 
-    - item.0.name != "configuration_server"
-    - item.1.name != "configuration_server"
+  when:
+    - 'not "configuration_server" in item.0.instances'
+    - 'not "configuration_server" in item.1.instances'
 
 - name: Find Flatbuffers files ending with .fbs
   find:
@@ -62,18 +53,18 @@
 - name: Copy default event (fbs-file) to the models
   copy:
     src: "../resources/idl/event.fbs"
-    dest: "../models/{{ item.name }}/resources/idl/"
+    dest: "{{ item.path }}/resources/idl/"
   loop: "{{ models }}"
-  when: item.name != "configuration_server"
+  when: 'not "configuration_server" in item.instances'
 
 - name: Include specific eventdata-fbs into default event-fbs
   lineinfile:
-    path: "../models/{{ item[0].name }}/resources/idl/event.fbs"
+    path: "{{ item[0].path }}/resources/idl/event.fbs"
     insertafter: "// event.fbs"
     line: 'include "{{ item[1].path | basename }}";'
   when:
-    - item[1].path is search(item[0].name)
-    - item[0].name != "configuration_server"
+    - item[1].path is search(item[0].path)
+    - 'not "configuration_server" in item[0].instances'
     - (item[1].path | basename) != "event.fbs"
   with_nested:
     - "{{ models }}"
@@ -88,12 +79,12 @@
     
 - name: Add specific eventdata-fbs to union type of default event-fbs
   lineinfile:
-    path: "../models/{{ item[0].name }}/resources/idl/event.fbs"
+    path: "{{ item[0].path }}/resources/idl/event.fbs"
     insertafter: "String:string,"
     line: '{{ item[1].stdout }},'
   when:
-    - item[1].item.path is search(item[0].name)
-    - item[0].name != "configuration_server"
+    - item[1].item.path is search(item[0].path)
+    - 'not "configuration_server" in item[0].instances'
     - item[1].stdout is defined
   with_nested:
     - "{{ models }}"
@@ -109,11 +100,7 @@
     recurse: yes
   register: fbs_files
 
-- debug:
-    msg: "{{ item.path | dirname }}"
-  loop: "{{ fbs_files.files }}"
-
 - name: Generate C++ headers to access and construct serialized events
-  command: flatc -o {{ item.path | dirname }} --cpp {{ item.path }}
+  command: flatc -o {{ item.path | dirname }} --cpp {{ item.path }} --gen-mutable
   loop: "{{ fbs_files.files }}"
   changed_when: False

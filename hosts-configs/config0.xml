@@ -1,50 +1,50 @@
 <?xml version="1.0"?>
 <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:noNamespaceSchemaLocation="../fraser/schemas/models-config.xsd">
-	
-	<Configuration path="../configurations/config_0"/>
-	
+
+	<!-- Port numbers p∈Z|minPort≤x≤maxPort) are automatically assigned -->
 	<Hosts minPort="6000" maxPort="6100">
-		<Host id="0">
-			<Name>host0</Name>
+		<Host id="host_0">
+			<Description>PC in room 2.21</Description>
 			<Address>localhost</Address>
 		</Host>
-<!--
-		<Host id="1">
-			<Name>host1</Name>
-			<Address>localhost</Address>
-		</Host>
-		<Host id="2">
-			<Name>host2</Name>
-			<Address>localhost</Address>
-		</Host>
--->
+		<!-- Add more hosts for a distributed simulation -->
 	</Hosts>
 
-	<Models>
-		<Model id="0">
-			<Name>configuration_server</Name>
-			<HostReference hostID="0" />
-		</Model>
-	
-		<Model id="1" persist="true">
-			<Name>simulation_model</Name>
-			<HostReference hostID="0" />
+	<!-- [configPath]: Define the configuration path for the models -->
+	<!-- The folder contains files with the initialized state of each persistent 
+		model -->
+	<Models configPath="../configurations/config_0">
+
+		<!-- Do not remove this model! -->
+		<!-- Model is part of the environment -->
+		<Model id="configuration_server"
+			path="../models/configuration_server">
+			<HostReference hostID="host_0" />
 		</Model>
 
-		<Model persist="true" id="2">
-			<Name>event_queue_1</Name>
-			<HostReference hostID="0" />
+		<!-- Do not remove this model! -->
+		<!-- Model is part of the environment -->
+		<Model persist="true" id="simulation_model"
+			path="../models/simulation_model">
+			<HostReference hostID="host_0" />
 		</Model>
 
-		<Model persist="true" id="3">
-			<Name>model_1</Name>
-			<HostReference hostID="0" />
+		<!-- Add your Custom Models -->
+		<!-- [type]: name of the folder within the models-folder -->
+		<!-- [id]: unique model identifier/name -->
+		<!-- [HostReference]: define on which host the model is executed -->
+		<!-- [Dependencies]: define the dependencies to other models -->
+		<Model persist="true" id="event_queue_1" path="../models/event_queue_1">
+			<HostReference hostID="host_0" />
 		</Model>
 
-		<Model persist="true" id="4">
-			<Name>model_2</Name>
-			<HostReference hostID="0" />
+		<Model persist="true" id="model_1" path="../models/model_1">
+			<HostReference hostID="host_0" />
+		</Model>
+
+		<Model persist="true" id="model_2" path="../models/model_2">
+			<HostReference hostID="host_0" />
 		</Model>
 	</Models>
 </root>
