@@ -1,9 +1,0 @@
-// Example 1: Customized Event Data -->
-namespace event;
-
-table ExampleEventData1 {
-  name:string;
-  timestamp:ulong = -1;
-}
-
-root_type ExampleEventData1;

@@ -1,7 +1,2 @@
-/event_generated.h
 /event.fbs
-/example_data_1_generated.h
-/example_data_1.fbs
-/example_data_2.fbs
-/example_data_2_generated.h
-/example_data_3_generated.h
+/event_generated.h
