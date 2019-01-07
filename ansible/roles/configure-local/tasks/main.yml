@@ -1,0 +1,40 @@
+ #!/usr/bin/env pythonNone
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2018, German Aerospace Center (DLR)
+#
+# This file is part of the development version of FRASER.
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Authors:
+# - 2018, Annika Ofenloch (DLR RY-AVS)
+ 
+--- 
+  # -----------------------------------------------------------------------
+  # Install python package dependencies
+  # -----------------------------------------------------------------------
+- name: Install needed python packages via pip3.6
+  pip:
+    name: "{{ item }}"
+    executable: pip3.6
+    extra_args: --upgrade
+  loop:
+    - pip
+    - setuptools
+    - lxml
+    - configparser
+    - pyyaml
+    - pyOpenSSL
+    - cryptography
+
+  # -----------------------------------------------------------------------
+  # Install PugiXML
+  # -----------------------------------------------------------------------
+- name: Install PugiXML
+  apt: name="{{ item }}" update_cache=no state=present
+  loop:
+    - libpugixml-dev
+  
