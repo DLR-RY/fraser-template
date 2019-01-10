@@ -1,4 +1,4 @@
-# Copyright (c) 2017, German Aerospace Center (DLR)
+# Copyright (c) 2017-2018, German Aerospace Center (DLR)
 #
 # This file is part of the development version of FRASER.
 #
@@ -7,11 +7,12 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Authors:
-# - 2017, Annika Ofenloch (DLR RY-AVS)
+# - 2017-2018, Annika Ofenloch (DLR RY-AVS)
 
 PROG = event_queue_1
-SRCS= main.cpp Queue.cpp ../../fraser/src/communication/Subscriber.cpp ../../fraser/src/communication/Publisher.cpp \
-../../fraser/src/communication/Dealer.cpp ../../fraser/src/scheduler/Scheduler.cpp
+SRCS := $(wildcard *.cpp) \
+        $(wildcard ../../fraser/src/*/*.cpp)
+
 BINDIR = build/bin
 OBJDIR = build/obj
 

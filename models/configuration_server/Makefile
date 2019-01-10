@@ -1,4 +1,4 @@
-# Copyright (c) 2017, German Aerospace Center (DLR)
+# Copyright (c) 2017-2018, German Aerospace Center (DLR)
 #
 # This file is part of the development version of FRASER.
 #
@@ -7,10 +7,11 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Authors:
-# - 2017, Annika Ofenloch (DLR RY-AVS)
+# - 2017-2018, Annika Ofenloch (DLR RY-AVS)
 
 PROG = configuration_server
-SRCS= main.cpp ConfigurationServer.cpp
+SRCS := $(wildcard *.cpp)
+
 BINDIR = build/bin
 OBJDIR = build/obj
 
