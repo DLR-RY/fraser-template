@@ -17,7 +17,7 @@
   # Execute models locally to create default configuration files
   # -------------------------------------------------------------------
 - name: Check if folder for configuration files exists
-  file: path="../configurations/{{ config }}" state=directory
+  file: path="{{ config_path }}" state=directory
 
 - name: Run configuration server locally
   shell: "../models/configuration_server/build/bin/configuration_server --config-file {{ hosts_config_filepath }}"
@@ -26,17 +26,19 @@
   changed_when: False
   
 - name: Run models locally
-  shell: "../models/{{ item.name }}/build/bin/{{ item.name }}"
+  shell: "{{ item.0.path }}/build/bin/{{ item.0.path | basename }} -n {{ item.1 }}"
   async: 1000
   poll: 0
-  loop: "{{ models }}"
+  with_subelements:
+    - "{{ models }}"
+    - instances
   when:
-    - item.name != "simulation_model"
-    - item.name != "configuration_server"
+    - 'not "simulation_model" in item.1'
+    - 'not "configuration_server" in item.1'
   changed_when: False
   
 - name: Run simulation model locally
-  shell: "../models/simulation_model/build/bin/simulation_model --create-config-files ../configurations/{{ config }}/"
+  shell: "../models/simulation_model/build/bin/simulation_model --create-config-files {{ config_path }}/"
   register: sim_output
   changed_when: False
 
