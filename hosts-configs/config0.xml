@@ -35,16 +35,25 @@
 		<!-- [id]: unique model identifier/name -->
 		<!-- [HostReference]: define on which host the model is executed -->
 		<!-- [Dependencies]: define the dependencies to other models -->
-		<Model persist="true" id="event_queue_1" path="../models/event_queue_1">
+		<Model persist="true" id="event_queue_1"
+			path="../models/event_queue_1">
 			<HostReference hostID="host_0" />
 		</Model>
 
 		<Model persist="true" id="model_1" path="../models/model_1">
 			<HostReference hostID="host_0" />
+			<Dependencies>
+				<ModelReference modelID="event_queue_1" />
+				<ModelReference modelID="model_2" />
+			</Dependencies>
 		</Model>
 
 		<Model persist="true" id="model_2" path="../models/model_2">
 			<HostReference hostID="host_0" />
+			<Dependencies>
+				<ModelReference modelID="event_queue_1" />
+				<ModelReference modelID="model_1" />
+			</Dependencies>
 		</Model>
 	</Models>
 </root>
