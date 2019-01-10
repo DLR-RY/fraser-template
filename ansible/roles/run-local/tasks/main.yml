@@ -1,0 +1,43 @@
+#!/usr/bin/env pythonNone
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2018, German Aerospace Center (DLR)
+#
+# This file is part of the development version of FRASER.
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Authors:
+# - 2018, Annika Ofenloch (DLR RY-AVS)
+
+---
+  # -------------------------------------------------------------------
+  # Execute models locally to create default configuration files
+- name: Run configuration server locally
+  shell: "../models/configuration_server/build/bin/configuration_server --config-file {{ hosts_config_filepath }}"
+  async: 1000
+  poll: 0
+  changed_when: False
+  
+- name: Run models locally
+  shell: "{{ item.0.path }}/build/bin/{{ item.0.path | basename }} -n {{ item.1 }}"
+  async: 1000
+  poll: 0
+  with_subelements:
+    - "{{ models }}"
+    - instances
+  when:
+    - 'not "simulation_model" in item.1'
+    - 'not "configuration_server" in item.1'
+  changed_when: False
+  
+- name: Run simulation model locally
+  shell: "../models/simulation_model/build/bin/simulation_model --load-config {{ config_path }}/"
+  register: sim_output
+  changed_when: False
+
+- debug: var=sim_output.stdout_lines
+  when: sim_output.stdout_lines is defined
+  # -------------------------------------------------------------------
