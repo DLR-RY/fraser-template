@@ -22,18 +22,17 @@ Queue::Queue(std::string name, std::string description) :
 
 	registerInterruptSignal();
 
-	mRun = this->prepare();
-	this->init();
-}
+	mRun = prepare();
 
-Queue::~Queue() {
-
+	init();
 }
 
 void Queue::init() {
 	// Set or calculate other parameters ...
-	mEventSet.push_back(Event("Test_Event", 0, 3, 199, Priority::NORMAL_PRIORITY));
-	mEventSet.push_back(Event("Test_Event", 0, 3, 199, Priority::HIGH_PRIORITY));
+	mEventSet.push_back(
+			Event("Test_Event", 0, 3, 199, Priority::NORMAL_PRIORITY));
+	mEventSet.push_back(
+			Event("Test_Event", 0, 3, 199, Priority::HIGH_PRIORITY));
 }
 
 bool Queue::prepare() {
@@ -46,6 +45,13 @@ bool Queue::prepare() {
 	if (!mSubscriber.connectToPub(mDealer.getIPFrom("simulation_model"),
 			mDealer.getPortNumFrom("simulation_model"))) {
 		return false;
+	}
+
+	for (auto depModel : mDealer.getModelDependencies()) {
+		if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
+				mDealer.getPortNumFrom(depModel))) {
+			return false;
+		}
 	}
 
 	mSubscriber.subscribeTo("SimTimeChanged");
@@ -79,10 +85,9 @@ void Queue::run() {
 }
 
 void Queue::updateEvents() {
-
 	if (mEventSet.back().getRepeat() != 0) {
 		int timestamp = mCurrentSimTime + mEventSet.back().getPeriod();
-		mEventSet.back().set_timestamp(timestamp);
+		mEventSet.back().setTimestamp(timestamp);
 
 		if (mEventSet.back().getRepeat() != -1) {
 			mEventSet.back().setRepeat(mEventSet.back().getRepeat() - 1);
@@ -96,13 +101,36 @@ void Queue::updateEvents() {
 }
 
 void Queue::handleEvent() {
-	mReceivedEvent = event::GetEvent(mSubscriber.getEventBuffer());
-	mEventName = mSubscriber.getEventName();
-	mCurrentSimTime = mReceivedEvent->timestamp();
-	mData = mReceivedEvent->data_as_String()->str();
+	auto eventBuffer = mSubscriber.getEventBuffer();
 
-	if (mEventName == "SimTimeChanged") {
+	auto receivedEvent = event::GetEvent(eventBuffer);
+	std::string eventName = receivedEvent->name()->str();
+	mCurrentSimTime = receivedEvent->timestamp();
+	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
+	if (receivedEvent->event_data() != nullptr) {
+		auto dataRef = receivedEvent->event_data_flexbuffer_root();
+
+		if (dataRef.IsString()) {
+			std::string configPath =
+					receivedEvent->event_data_flexbuffer_root().AsString().str();
+
+			if (eventName == "SaveState") {
+				saveState(
+						std::string(configPath.begin(), configPath.end())
+								+ mName + ".config");
+			}
+
+			else if (eventName == "LoadState") {
+				loadState(
+						std::string(configPath.begin(), configPath.end())
+								+ mName + ".config");
+			}
+		}
+	}
+
+	else if (eventName == "SimTimeChanged") {
+		// Send new Flit every clock cycle
 		if (!mEventSet.empty()) {
 			auto nextEvent = mEventSet.back();
 
@@ -119,19 +147,9 @@ void Queue::handleEvent() {
 		}
 	}
 
-	else if (mEventName == "SaveState") {
-		this->saveState(mData + mName + ".config");
-	}
-
-	else if (mEventName == "LoadState") {
-		this->loadState(mData + mName + ".config");
-	}
-
-	else if (mEventName == "End") {
-		std::cout << "Queue: End-Event" << std::endl;
+	else if (eventName == "End") {
 		mRun = false;
 	}
-
 }
 
 void Queue::saveState(std::string filePath) {
@@ -167,7 +185,7 @@ void Queue::loadState(std::string filePath) {
 
 	mScheduler.scheduleEvents(mEventSet);
 
-	mRun = mSubscriber.synchronizeSub();
+	init();
 
-	this->init();
+	mRun = mSubscriber.synchronizeSub();
 }

@@ -129,7 +129,4 @@ private:
 
 };
 
-//BOOST_CLASS_VERSION(SimulationModel, 0);
-//BOOST_CLASS_IMPLEMENTATION(SimulationModel, boost::serialization::object_serializable)
-
 #endif /* SIMULATION_MODEL_SIMULATIONMODEL_H_ */

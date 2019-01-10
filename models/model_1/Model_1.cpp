@@ -16,14 +16,10 @@
 
 Model1::Model1(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
-				mCtx), mDealer(mCtx, mName), mReceivedEvent(NULL), mCurrentSimTime(
-				0) {
+				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0) {
 
-	mRun = this->prepare();
-	this->init();
-}
-
-Model1::~Model1() {
+	mRun = prepare();
+	init();
 }
 
 void Model1::init() {
@@ -42,16 +38,12 @@ bool Model1::prepare() {
 		return false;
 	}
 
-	if (!mSubscriber.connectToPub(mDealer.getIPFrom("event_queue_1"),
-			mDealer.getPortNumFrom("event_queue_1"))) {
-		return false;
+	for (auto depModel : mDealer.getModelDependencies()) {
+		if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
+				mDealer.getPortNumFrom(depModel))) {
+			return false;
+		}
 	}
-
-	if (!mSubscriber.connectToPub(mDealer.getIPFrom("model_2"),
-			mDealer.getPortNumFrom("model_2"))) {
-		return false;
-	}
-
 
 	mSubscriber.subscribeTo("LoadState");
 	mSubscriber.subscribeTo("SaveState");
@@ -76,43 +68,56 @@ bool Model1::prepare() {
 
 void Model1::run() {
 	while (mRun) {
-		mSubscriber.receiveEvent();
-		this->handleEvent();
+		if (mSubscriber.receiveEvent()) {
+			handleEvent();
+		}
 	}
 }
 
 void Model1::handleEvent() {
-	mReceivedEvent = event::GetEvent(mSubscriber.getEventBuffer());
-	mEventName = mReceivedEvent->name()->str();
-	mCurrentSimTime = mReceivedEvent->timestamp();
-	mData = mReceivedEvent->data_as_String()->str();
+	auto eventBuffer = mSubscriber.getEventBuffer();
 
+	auto receivedEvent = event::GetEvent(eventBuffer);
+	std::string eventName = receivedEvent->name()->str();
+	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	if (mEventName == "FirstEvent") {
+	if (receivedEvent->event_data() != nullptr) {
+		auto dataRef = receivedEvent->event_data_flexbuffer_root();
+
+		if (dataRef.IsString()) {
+			std::string configPath =
+					receivedEvent->event_data_flexbuffer_root().AsString().str();
+
+			if (eventName == "SaveState") {
+				saveState(
+						std::string(configPath.begin(), configPath.end())
+								+ mName + ".config");
+			}
+
+			else if (eventName == "LoadState") {
+				loadState(
+						std::string(configPath.begin(), configPath.end())
+								+ mName + ".config");
+			}
+		}
+	}
+
+	if (eventName == "FirstEvent") {
 		mEventOffset = event::CreateEvent(mFbb,
 				mFbb.CreateString("SubsequentEvent"), mCurrentSimTime);
 		mFbb.Finish(mEventOffset);
-		this->mPublisher.publishEvent("SubsequentEvent",
-				mFbb.GetBufferPointer(), mFbb.GetSize());
+		mPublisher.publishEvent("SubsequentEvent", mFbb.GetBufferPointer(),
+				mFbb.GetSize());
 	}
 
-	else if (mEventName == "ReturnEvent") {
-
+	else if (eventName == "ReturnEvent") {
+		// Do something with the returned event from model 2
 	}
 
-	else if (mEventName == "SaveState") {
-		this->saveState(std::string(mData.begin(), mData.end()) + mName + ".config");
-	}
-
-	else if (mEventName == "LoadState") {
-		this->loadState(std::string(mData.begin(), mData.end()) + mName + ".config");
-	}
-
-	else if (mEventName == "End") {
+	else if (eventName == "End") {
 		mRun = false;
 	}
-
 }
 
 void Model1::saveState(std::string filePath) {
@@ -123,7 +128,8 @@ void Model1::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during serializing:" << std::endl;
+		std::cout << mName << ": Archive Exception during serializing:"
+				<< std::endl;
 		std::cout << ex.what() << std::endl;
 	}
 
@@ -138,11 +144,12 @@ void Model1::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ":Archive Exception during deserializing:" << std::endl;
+		std::cout << mName << ": Archive Exception during deserializing:"
+				<< std::endl;
 		std::cout << ex.what() << std::endl;
 	}
 
-	mRun = mSubscriber.synchronizeSub();
+	init();
 
-	this->init();
+	mRun = mSubscriber.synchronizeSub();
 }

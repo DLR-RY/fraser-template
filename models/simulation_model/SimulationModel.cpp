@@ -17,14 +17,13 @@
 
 SimulationModel::SimulationModel(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mPublisher(mCtx), mDealer(
-				mCtx, mName), mSimTime("SimTime", 1000), mSimTimeStep(
+				mCtx, mName), mSimTime("SimTime", 5000), mSimTimeStep(
 				"SimTimeStep", 100), mCurrentSimTime("CurrentSimTime", 0), mCycleTime(
 				"CylceTime", 0), mSpeedFactor("SpeedFactor", 1.0) {
 
 	registerInterruptSignal();
 
-	mRun = this->prepare();
-	this->init();
+	mRun = prepare();
 }
 
 SimulationModel::~SimulationModel() {
@@ -51,6 +50,9 @@ bool SimulationModel::prepare() {
 	}
 
 	// (mTotalNumOfModels - 2), because the simulation and configuration models should not be included
+	std::cout
+			<< "Synchronize simulation model with the other models (after configuration phase)."
+			<< std::endl;
 	if (!mPublisher.synchronizePub(mTotalNumOfModels - 2,
 			mCurrentSimTime.getValue())) {
 		return false;
@@ -60,7 +62,7 @@ bool SimulationModel::prepare() {
 }
 
 void SimulationModel::run() {
-	uint64_t currentSimTime = mCurrentSimTime.getValue();
+	uint64_t currentSimTime = getCurrentSimTime();
 	if (mRun) {
 		while (currentSimTime <= mSimTime.getValue()) {
 			if (!mPause) {
@@ -76,11 +78,11 @@ void SimulationModel::run() {
 					}
 				}
 
-				std::cout << "[SIMTIME] --> " << currentSimTime << std::endl;
+				//std::cout << "[SIMTIME] --> " << currentSimTime << std::endl;
 				mEventOffset = event::CreateEvent(mFbb,
-						mFbb.CreateString("simTimeChanged"), currentSimTime);
+						mFbb.CreateString("SimTimeChanged"), currentSimTime);
 				mFbb.Finish(mEventOffset);
-				mPublisher.publishEvent("simTimeChanged",
+				mPublisher.publishEvent("SimTimeChanged",
 						mFbb.GetBufferPointer(), mFbb.GetSize());
 
 				std::this_thread::sleep_for(
@@ -95,6 +97,7 @@ void SimulationModel::run() {
 			}
 		}
 	}
+
 	this->stopSim();
 }
 
@@ -103,12 +106,14 @@ void SimulationModel::stopSim() {
 	mEventOffset = event::CreateEvent(mFbb, mFbb.CreateString("End"),
 			mCurrentSimTime.getValue());
 	mFbb.Finish(mEventOffset);
+
 	mPublisher.publishEvent("End", mFbb.GetBufferPointer(), mFbb.GetSize());
 
 	mDealer.stopDNSserver();
 }
 
 void SimulationModel::loadState(std::string filePath) {
+	std::cout << mName << " ... Load State" << std::endl;
 	this->pauseSim();
 
 	// Restore states
@@ -118,34 +123,52 @@ void SimulationModel::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << "Archive Exception during deserializing:" << std::endl;
+		std::cout << mName << ": Archive Exception during deserializing: "
+				<< std::endl;
 		std::cout << ex.what() << std::endl;
 	}
 
+	// Event Data Serialization
+	flexbuffers::Builder flexbuild;
+	flexbuild.Add(filePath);
+	flexbuild.Finish();
+	auto data = mFbb.CreateVector(flexbuild.GetBuffer());
+
 	mEventOffset = event::CreateEvent(mFbb, mFbb.CreateString("LoadState"),
 			mCurrentSimTime.getValue(), event::Priority_NORMAL_PRIORITY, 0, 0,
-			event::EventData_String, mFbb.CreateString(filePath).Union());
+			data);
 	mFbb.Finish(mEventOffset);
+
 	mPublisher.publishEvent("LoadState", mFbb.GetBufferPointer(),
 			mFbb.GetSize());
+
+	this->init();
 
 	// Synchronization is necessary, because the simulation
 	// has to wait until the other models finished their Restore-method
 	// (mNumOfPersistModels - 1), because the simulation model itself should not be included
+	std::cout
+			<< "Synchronize simulation model with the other models (after initialization phase)."
+			<< std::endl;
 	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1,
 			mCurrentSimTime.getValue());
-
-	this->init();
 
 	this->continueSim();
 }
 
 void SimulationModel::saveState(std::string filePath) {
+	std::cout << mName << " ... Save State" << std::endl;
 	this->pauseSim();
+
+	// Event Data Serialization
+	flexbuffers::Builder flexbuild;
+	flexbuild.Add(filePath);
+	flexbuild.Finish();
+	auto data = mFbb.CreateVector(flexbuild.GetBuffer());
 
 	mEventOffset = event::CreateEvent(mFbb, mFbb.CreateString("SaveState"),
 			mCurrentSimTime.getValue(), event::Priority_NORMAL_PRIORITY, 0, 0,
-			event::EventData_String, mFbb.CreateString(filePath).Union());
+			data);
 	mFbb.Finish(mEventOffset);
 	mPublisher.publishEvent("SaveState", mFbb.GetBufferPointer(),
 			mFbb.GetSize());
@@ -170,7 +193,7 @@ void SimulationModel::saveState(std::string filePath) {
 			mCurrentSimTime.getValue());
 
 	if (mConfigMode) {
-		std::cout<<"Default configuration files were created"<<std::endl;
+		std::cout << "Default configuration files were created" << std::endl;
 		this->stopSim();
 	} else {
 		this->continueSim();

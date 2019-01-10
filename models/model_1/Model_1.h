@@ -34,7 +34,7 @@ class Model1: public virtual IModel,
 		public virtual IPersist {
 public:
 	Model1(std::string name, std::string description);
-	virtual ~Model1();
+	virtual ~Model1() = default;
 
 	// IModel
 	virtual void init() override;
@@ -69,10 +69,7 @@ private:
 	flatbuffers::Offset<event::Event> mEventOffset;
 
 	bool mRun;
-	const event::Event* mReceivedEvent;
-	std::string mEventName;
 	int mCurrentSimTime;
-	std::string mData;
 
 	friend class boost::serialization::access;
 	template<typename Archive>

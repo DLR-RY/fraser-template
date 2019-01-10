@@ -24,12 +24,12 @@
 #include "communication/Dealer.h"
 #include "communication/Publisher.h"
 #include "communication/Subscriber.h"
-#include "data-types/EventSet.h"
 #include "communication/zhelpers.hpp"
 #include "interfaces/IModel.h"
 #include "interfaces/IPersist.h"
 #include "interfaces/IQueue.h"
 #include "scheduler/Scheduler.h"
+#include "data-types/Event.h"
 
 #include "resources/idl/event_generated.h"
 
@@ -39,7 +39,7 @@ class Queue: public virtual IModel,
 
 public:
 	Queue(std::string name, std::string description);
-	virtual ~Queue();
+	virtual ~Queue() = default;
 
 	// IModel
 	virtual void init() override;
@@ -61,8 +61,8 @@ private:
 
 	// IQueue
 	virtual void updateEvents() override;
-	// TODO: Change to std::vector< flatbuffers::Offset<event::Event> >
-	EventSet mEventSet;
+
+	std::vector<Event> mEventSet;
 
 	std::string mName;
 	std::string mDescription;

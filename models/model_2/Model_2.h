@@ -34,7 +34,7 @@ class Model2: public virtual IModel,
 		public virtual IPersist {
 public:
 	Model2(std::string name, std::string description);
-	virtual ~Model2();
+	virtual ~Model2() = default;
 
 	// IModel
 	virtual void init() override;
@@ -65,10 +65,7 @@ private:
 	Dealer mDealer;
 
 	bool mRun;
-	const event::Event* mReceivedEvent;
-	std::string mEventName;
 	int mCurrentSimTime;
-	std::string mData;
 
 	// Event Serialiazation
 	flatbuffers::FlatBufferBuilder mFbb;
