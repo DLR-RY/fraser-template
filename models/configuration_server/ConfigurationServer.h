@@ -15,13 +15,12 @@
 #define CONFIGURATION_SERVER_CONFIGURATIONSERVER_H_
 
 #include <map>
-
 #include <zmq.hpp>
+#include <pugixml.hpp>
+#include <string>
 
 #include "communication/zhelpers.hpp"
 #include "interfaces/IModel.h"
-#include <pugixml.hpp>
-#include <string>
 
 //  This is our external configuration server, which deals with requests and sends the requested IP or Port back to the client.
 //  The server can handle one request at time.
@@ -48,6 +47,7 @@ public:
 	int getNumberOfPersistModels();
 	std::vector<std::string> getModelNames();
 	std::string getModelInformation(std::string request);
+	std::vector<std::string> getModelDependencies(std::string modelName);
 
 	// Get informations from xml-file
 	void setMinAndMaxPort();
