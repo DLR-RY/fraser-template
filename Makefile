@@ -6,7 +6,7 @@ all:
 	make configure-local
 	make update-inv
 	make configure
-	make init
+	make initialize
 	make build-all
 	make default-configs
 	make run-local
