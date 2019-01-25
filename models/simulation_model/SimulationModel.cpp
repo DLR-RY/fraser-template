@@ -27,6 +27,7 @@ SimulationModel::SimulationModel(std::string name, std::string description) :
 }
 
 SimulationModel::~SimulationModel() {
+	this->stopSim();
 }
 
 void SimulationModel::init() {
@@ -51,7 +52,7 @@ bool SimulationModel::prepare() {
 
 	// (mTotalNumOfModels - 2), because the simulation and configuration models should not be included
 	std::cout
-			<< "Synchronize simulation model with the other models (after configuration phase)."
+			<< "Synchronize simulation model with the other models (after preparation phase)."
 			<< std::endl;
 	if (!mPublisher.synchronizePub(mTotalNumOfModels - 2,
 			mCurrentSimTime.getValue())) {
@@ -78,7 +79,21 @@ void SimulationModel::run() {
 					}
 				}
 
-				//std::cout << "[SIMTIME] --> " << currentSimTime << std::endl;
+				// Event Data Serialization
+				flexbuffers::Builder logInfo;
+				std::string logMsg = "Simulation Time: "
+						+ std::to_string(currentSimTime);
+				logInfo.Add(logMsg);
+				logInfo.Finish();
+				auto logData = mFbb.CreateVector(logInfo.GetBuffer());
+				mFbb.Finish(
+						event::CreateEvent(mFbb, mFbb.CreateString("LogInfo"),
+								mCurrentSimTime.getValue(),
+								event::Priority_NORMAL_PRIORITY, 0, 0,
+								logData));
+				mPublisher.publishEvent("Logger", mFbb.GetBufferPointer(),
+						mFbb.GetSize());
+
 				mEventOffset = event::CreateEvent(mFbb,
 						mFbb.CreateString("SimTimeChanged"), currentSimTime);
 				mFbb.Finish(mEventOffset);
@@ -189,6 +204,9 @@ void SimulationModel::saveState(std::string filePath) {
 	// Synchronization is necessary, because the simulation
 	// has to wait until the other models finished their Store-method
 	// (mNumOfPersistModels - 1), because the simulation model itself should not be included
+	std::cout
+			<< "Synchronize simulation model with the other models (after save state phase)."
+			<< std::endl;
 	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1,
 			mCurrentSimTime.getValue());
 

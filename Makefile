@@ -1,4 +1,4 @@
-hosts_config_file?=config0.xml
+hosts_config_file?=config1.xml
 model?=
 ANSIBLE_DIR := ansible
 

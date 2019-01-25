@@ -20,7 +20,7 @@ Queue::Queue(std::string name, std::string description) :
 				mCtx), mDealer(mCtx, mName), mReceivedEvent(NULL), mCurrentSimTime(
 				-1) {
 
-	registerInterruptSignal();
+//	registerInterruptSignal();
 
 	mRun = prepare();
 
@@ -75,12 +75,12 @@ bool Queue::prepare() {
 
 void Queue::run() {
 	while (mRun) {
-		mSubscriber.receiveEvent();
-		this->handleEvent();
-
-		if (interruptOccured) {
-			break;
+		if (mSubscriber.receiveEvent()) {
+			this->handleEvent();
 		}
+//		if (interruptOccured) {
+//			break;
+//		}
 	}
 }
 
