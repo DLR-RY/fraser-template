@@ -101,6 +101,6 @@
   register: fbs_files
 
 - name: Generate C++ headers to access and construct serialized events
-  command: flatc -o {{ item.path | dirname }} --cpp {{ item.path }} --gen-mutable
+  command: flatc -o {{ item.path | dirname }} --cpp {{ item.path }} --gen-mutable --gen-object-api
   loop: "{{ fbs_files.files }}"
   changed_when: False
