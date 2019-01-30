@@ -79,26 +79,13 @@ void SimulationModel::run() {
 					}
 				}
 
-				// Event Data Serialization
-				flexbuffers::Builder logInfo;
-				std::string logMsg = "Simulation Time: "
+				// Log info
+				auto logMsg = "Simulation Time: "
 						+ std::to_string(currentSimTime);
-				logInfo.Add(logMsg);
-				logInfo.Finish();
-				auto logData = mFbb.CreateVector(logInfo.GetBuffer());
-				mFbb.Finish(
-						event::CreateEvent(mFbb, mFbb.CreateString("LogInfo"),
-								mCurrentSimTime.getValue(),
-								event::Priority_NORMAL_PRIORITY, 0, 0,
-								logData));
-				mPublisher.publishEvent("Logger", mFbb.GetBufferPointer(),
-						mFbb.GetSize());
+				mPublisher.publishEvent("LogInfo", currentSimTime, logMsg);
 
-				mEventOffset = event::CreateEvent(mFbb,
-						mFbb.CreateString("SimTimeChanged"), currentSimTime);
-				mFbb.Finish(mEventOffset);
-				mPublisher.publishEvent("SimTimeChanged",
-						mFbb.GetBufferPointer(), mFbb.GetSize());
+				// Publish current simulation time
+				mPublisher.publishEvent("SimTimeChanged", currentSimTime);
 
 				std::this_thread::sleep_for(
 						std::chrono::milliseconds(mCycleTime.getValue()));
@@ -118,11 +105,7 @@ void SimulationModel::run() {
 
 void SimulationModel::stopSim() {
 	// Stop all running models and the dns server
-	mEventOffset = event::CreateEvent(mFbb, mFbb.CreateString("End"),
-			mCurrentSimTime.getValue());
-	mFbb.Finish(mEventOffset);
-
-	mPublisher.publishEvent("End", mFbb.GetBufferPointer(), mFbb.GetSize());
+	mPublisher.publishEvent("End", mCurrentSimTime.getValue());
 
 	mDealer.stopDNSserver();
 }
@@ -144,18 +127,7 @@ void SimulationModel::loadState(std::string filePath) {
 	}
 
 	// Event Data Serialization
-	flexbuffers::Builder flexbuild;
-	flexbuild.Add(filePath);
-	flexbuild.Finish();
-	auto data = mFbb.CreateVector(flexbuild.GetBuffer());
-
-	mEventOffset = event::CreateEvent(mFbb, mFbb.CreateString("LoadState"),
-			mCurrentSimTime.getValue(), event::Priority_NORMAL_PRIORITY, 0, 0,
-			data);
-	mFbb.Finish(mEventOffset);
-
-	mPublisher.publishEvent("LoadState", mFbb.GetBufferPointer(),
-			mFbb.GetSize());
+	mPublisher.publishEvent("LoadState", mCurrentSimTime.getValue(), filePath);
 
 	this->init();
 
@@ -176,17 +148,7 @@ void SimulationModel::saveState(std::string filePath) {
 	this->pauseSim();
 
 	// Event Data Serialization
-	flexbuffers::Builder flexbuild;
-	flexbuild.Add(filePath);
-	flexbuild.Finish();
-	auto data = mFbb.CreateVector(flexbuild.GetBuffer());
-
-	mEventOffset = event::CreateEvent(mFbb, mFbb.CreateString("SaveState"),
-			mCurrentSimTime.getValue(), event::Priority_NORMAL_PRIORITY, 0, 0,
-			data);
-	mFbb.Finish(mEventOffset);
-	mPublisher.publishEvent("SaveState", mFbb.GetBufferPointer(),
-			mFbb.GetSize());
+	mPublisher.publishEvent("SaveState", mCurrentSimTime.getValue(), filePath);
 
 	// Store states
 	std::ofstream ofs(filePath + mName + ".config");

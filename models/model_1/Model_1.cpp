@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #include <iostream>
@@ -86,29 +86,20 @@ void Model1::handleEvent() {
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
 		if (dataRef.IsString()) {
-			std::string configPath =
-					receivedEvent->event_data_flexbuffer_root().AsString().str();
+			std::string configPath = dataRef.ToString();
 
 			if (eventName == "SaveState") {
-				saveState(
-						std::string(configPath.begin(), configPath.end())
-								+ mName + ".config");
+				saveState(configPath + mName + ".config");
 			}
 
 			else if (eventName == "LoadState") {
-				loadState(
-						std::string(configPath.begin(), configPath.end())
-								+ mName + ".config");
+				loadState(configPath + mName + ".config");
 			}
 		}
 	}
 
 	if (eventName == "FirstEvent") {
-		mEventOffset = event::CreateEvent(mFbb,
-				mFbb.CreateString("SubsequentEvent"), mCurrentSimTime);
-		mFbb.Finish(mEventOffset);
-		mPublisher.publishEvent("SubsequentEvent", mFbb.GetBufferPointer(),
-				mFbb.GetSize());
+		mPublisher.publishEvent("SubsequentEvent", mCurrentSimTime);
 	}
 
 	else if (eventName == "ReturnEvent") {
@@ -121,6 +112,7 @@ void Model1::handleEvent() {
 }
 
 void Model1::saveState(std::string filePath) {
+	std::cout << mName << ": Start to save model state ..." << std::endl;
 	// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
@@ -132,6 +124,7 @@ void Model1::saveState(std::string filePath) {
 				<< std::endl;
 		std::cout << ex.what() << std::endl;
 	}
+	std::cout << mName << ": End of saving model state ..." << std::endl;
 
 	mRun = mSubscriber.synchronizeSub();
 }

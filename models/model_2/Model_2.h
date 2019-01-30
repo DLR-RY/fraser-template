@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #ifndef MODEL_2_MODEL_2_H_
@@ -66,10 +66,6 @@ private:
 
 	bool mRun;
 	int mCurrentSimTime;
-
-	// Event Serialiazation
-	flatbuffers::FlatBufferBuilder mFbb;
-	flatbuffers::Offset<event::Event> mEventOffset;
 
 	friend class boost::serialization::access;
 	template<typename Archive>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #ifndef SIMULATION_MODEL_SIMULATIONMODEL_H_
@@ -33,7 +33,6 @@
 #include "communication/zhelpers.hpp"
 
 #include "resources/idl/event_generated.h"
-
 
 class SimulationModel: public virtual IModel, public virtual IPersist {
 public:
@@ -105,10 +104,6 @@ private:
 
 	uint64_t mTotalNumOfModels = 0;
 	uint64_t mNumOfPersistModels = 0;
-
-	// Event Serialiazation
-	flatbuffers::FlatBufferBuilder mFbb;
-	flatbuffers::Offset<event::Event> mEventOffset;
 
 	friend class boost::serialization::access;
 	template<typename Archive>

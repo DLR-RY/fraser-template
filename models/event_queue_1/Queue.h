@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #ifndef EVENT_QUEUE_1_QUEUE_H_
@@ -88,10 +88,6 @@ private:
 
 	Scheduler mScheduler;
 	uint64_t mCurrentSimTime;
-
-	// Serialization
-	flatbuffers::FlatBufferBuilder mFbb;
-	flatbuffers::Offset<event::Event> mEventOffset;
 };
 
 #endif /* EVENT_QUEUE_1_QUEUE_H_ */

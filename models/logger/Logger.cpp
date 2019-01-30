@@ -57,7 +57,12 @@ bool Logger::prepare() {
 		}
 	}
 
-	mSubscriber.subscribeTo("Logger");
+	mSubscriber.subscribeTo("LogTrace");
+	mSubscriber.subscribeTo("LogDebug");
+	mSubscriber.subscribeTo("LogInfo");
+	mSubscriber.subscribeTo("LogWarning");
+	mSubscriber.subscribeTo("LogError");
+	mSubscriber.subscribeTo("LogFatal");
 	mSubscriber.subscribeTo("End");
 
 	// Synchronization
@@ -96,8 +101,6 @@ void Logger::handleEvent() {
 		if (dataRef.IsString()) {
 			auto logMsg =
 					receivedEvent->event_data_flexbuffer_root().AsString().str();
-
-
 
 			if (eventName == "LogTrace") {
 				BOOST_LOG_TRIVIAL(trace)<< logMsg.data();
