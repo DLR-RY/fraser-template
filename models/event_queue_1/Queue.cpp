@@ -27,9 +27,7 @@ Queue::Queue(std::string name, std::string description) :
 void Queue::init() {
 	// Set or calculate other parameters ...
 	mEventSet.push_back(
-			Event("Test_Event", 0, 3, 199, Priority::NORMAL_PRIORITY));
-	mEventSet.push_back(
-			Event("Test_Event", 0, 3, 199, Priority::HIGH_PRIORITY));
+			Event("FirstEvent", 500, 300, 10, Priority::NORMAL_PRIORITY));
 }
 
 bool Queue::prepare() {
@@ -127,6 +125,11 @@ void Queue::handleEvent() {
 				nextEvent.setCurrentSimTime(mCurrentSimTime);
 
 				mPublisher.publishEvent(nextEvent.getName(), mCurrentSimTime);
+
+				// Log
+				mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+						mName + " published " + nextEvent.getName());
+
 				this->updateEvents();
 			}
 		}
@@ -138,7 +141,6 @@ void Queue::handleEvent() {
 }
 
 void Queue::saveState(std::string filePath) {
-	std::cout << mName << ": Start to save model state ..." << std::endl;
 	// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
@@ -151,7 +153,10 @@ void Queue::saveState(std::string filePath) {
 				<< std::endl;
 		throw ex.what();
 	}
-	std::cout << mName << ": End of saving model state ..." << std::endl;
+
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " stored its state");
 
 	mRun = mSubscriber.synchronizeSub();
 }
@@ -169,6 +174,10 @@ void Queue::loadState(std::string filePath) {
 				<< std::endl;
 		throw ex.what();
 	}
+
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " restored its state");
 
 	mScheduler.scheduleEvents(mEventSet);
 

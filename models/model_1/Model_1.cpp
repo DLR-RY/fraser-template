@@ -82,6 +82,10 @@ void Model1::handleEvent() {
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " received " + eventName);
+
 	if (receivedEvent->event_data() != nullptr) {
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
@@ -100,6 +104,10 @@ void Model1::handleEvent() {
 
 	if (eventName == "FirstEvent") {
 		mPublisher.publishEvent("SubsequentEvent", mCurrentSimTime);
+
+		// Log
+		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+				mName + " published SubsequentEvent");
 	}
 
 	else if (eventName == "ReturnEvent") {
@@ -112,7 +120,6 @@ void Model1::handleEvent() {
 }
 
 void Model1::saveState(std::string filePath) {
-	std::cout << mName << ": Start to save model state ..." << std::endl;
 	// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
@@ -123,8 +130,14 @@ void Model1::saveState(std::string filePath) {
 		std::cout << mName << ": Archive Exception during serializing:"
 				<< std::endl;
 		std::cout << ex.what() << std::endl;
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during serializing");
 	}
-	std::cout << mName << ": End of saving model state ..." << std::endl;
+
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " stored its state");
 
 	mRun = mSubscriber.synchronizeSub();
 }
@@ -140,7 +153,14 @@ void Model1::loadState(std::string filePath) {
 		std::cout << mName << ": Archive Exception during deserializing:"
 				<< std::endl;
 		std::cout << ex.what() << std::endl;
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during deserializing");
 	}
+
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " restored its state");
 
 	init();
 

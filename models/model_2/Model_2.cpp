@@ -81,6 +81,10 @@ void Model2::handleEvent() {
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " received " + eventName);
+
 	if (receivedEvent->event_data() != nullptr) {
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
@@ -99,6 +103,10 @@ void Model2::handleEvent() {
 
 	else if (eventName == "SubsequentEvent") {
 		mPublisher.publishEvent("ReturnEvent", mCurrentSimTime);
+
+		// Log
+		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+				mName + " published ReturnEvent");
 	}
 
 	else if (eventName == "End") {
@@ -107,9 +115,7 @@ void Model2::handleEvent() {
 }
 
 void Model2::saveState(std::string filePath) {
-	std::cout << mName << ": Start to save model state ..." << std::endl;
-
-	// Store states
+// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
 	try {
@@ -119,14 +125,19 @@ void Model2::saveState(std::string filePath) {
 		std::cout << mName << ": Archive Exception during serializing:"
 				<< std::endl;
 		std::cout << ex.what() << std::endl;
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during serializing");
 	}
-	std::cout << mName << ": End of saving model state ..." << std::endl;
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " stored its state");
 
 	mRun = mSubscriber.synchronizeSub();
 }
 
 void Model2::loadState(std::string filePath) {
-	// Restore states
+// Restore states
 	std::ifstream ifs(filePath);
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
 	try {
@@ -136,7 +147,14 @@ void Model2::loadState(std::string filePath) {
 		std::cout << mName << ": Archive Exception during deserializing:"
 				<< std::endl;
 		std::cout << ex.what() << std::endl;
+
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during deserializing");
 	}
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " restored its state");
 
 	init();
 

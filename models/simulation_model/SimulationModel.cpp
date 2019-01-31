@@ -80,9 +80,8 @@ void SimulationModel::run() {
 				}
 
 				// Log info
-				auto logMsg = "Simulation Time: "
-						+ std::to_string(currentSimTime);
-				mPublisher.publishEvent("LogInfo", currentSimTime, logMsg);
+				mPublisher.publishEvent("LogInfo", currentSimTime,
+						"Simulation Time: " + std::to_string(currentSimTime));
 
 				// Publish current simulation time
 				mPublisher.publishEvent("SimTimeChanged", currentSimTime);

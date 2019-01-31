@@ -30,7 +30,7 @@ void Logger::init() {
 			char>("Severity");
 
 	logging::add_file_log(keywords::file_name = "sample.log", keywords::format =
-			"[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%");
+			"[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%", keywords::auto_flush = true);
 
 	logging::core::get()->set_filter(
 			logging::trivial::severity >= logging::trivial::info);
@@ -99,8 +99,7 @@ void Logger::handleEvent() {
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
 		if (dataRef.IsString()) {
-			auto logMsg =
-					receivedEvent->event_data_flexbuffer_root().AsString().str();
+			auto logMsg = dataRef.ToString();
 
 			if (eventName == "LogTrace") {
 				BOOST_LOG_TRIVIAL(trace)<< logMsg.data();
