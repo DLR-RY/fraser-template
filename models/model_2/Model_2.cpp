@@ -122,8 +122,6 @@ void Model2::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during serializing:"
-				<< std::endl;
 		std::cout << ex.what() << std::endl;
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,

@@ -136,6 +136,10 @@ void Queue::handleEvent() {
 	}
 
 	else if (eventName == "End") {
+		// Log
+		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+				mName + " received " + eventName);
+
 		mRun = false;
 	}
 }
@@ -149,9 +153,11 @@ void Queue::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("EventSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during serializing: "
-				<< std::endl;
 		throw ex.what();
+
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during serializing");
 	}
 
 	// Log
@@ -170,9 +176,11 @@ void Queue::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("EventSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during deserializing:"
-				<< std::endl;
 		throw ex.what();
+
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during deserializing");
 	}
 
 	// Log

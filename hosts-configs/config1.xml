@@ -56,7 +56,7 @@
 			</Dependencies>
 		</Model>
 		
-		<Model id="logger" path="../models/logger">
+		<Model persist="true" id="logger" path="../models/logger">
 			<HostReference hostID="host_0" />
 			<Dependencies>
 				<ModelReference modelID="event_queue_1" />

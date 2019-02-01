@@ -105,12 +105,14 @@ void SimulationModel::run() {
 void SimulationModel::stopSim() {
 	// Stop all running models and the dns server
 	mPublisher.publishEvent("End", mCurrentSimTime.getValue());
+	// Wait that all models are terminated before terminating the logger
+	sleep(1);
+	mPublisher.publishEvent("EndLogger", mCurrentSimTime.getValue());
 
 	mDealer.stopDNSserver();
 }
 
 void SimulationModel::loadState(std::string filePath) {
-	std::cout << mName << " ... Load State" << std::endl;
 	this->pauseSim();
 
 	// Restore states
@@ -120,9 +122,11 @@ void SimulationModel::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during deserializing: "
-				<< std::endl;
 		std::cout << ex.what() << std::endl;
+
+		// Log
+		mPublisher.publishEvent("LogError", 0,
+				mName + ": Archive Exception during deserializing");
 	}
 
 	// Event Data Serialization
@@ -143,7 +147,6 @@ void SimulationModel::loadState(std::string filePath) {
 }
 
 void SimulationModel::saveState(std::string filePath) {
-	std::cout << mName << " ... Save State" << std::endl;
 	this->pauseSim();
 
 	// Event Data Serialization
@@ -157,9 +160,11 @@ void SimulationModel::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during serializing:"
-				<< std::endl;
 		std::cout << ex.what() << std::endl;
+
+		// Log
+		mPublisher.publishEvent("LogError", 0,
+				mName + ": Archive Exception during serializing");
 	}
 
 	// Synchronization is necessary, because the simulation
@@ -172,7 +177,10 @@ void SimulationModel::saveState(std::string filePath) {
 			mCurrentSimTime.getValue());
 
 	if (mConfigMode) {
-		std::cout << "Default configuration files were created" << std::endl;
+		// Log info
+		mPublisher.publishEvent("LogInfo", 0,
+				"Default configuration files were created");
+
 		this->stopSim();
 	} else {
 		this->continueSim();

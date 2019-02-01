@@ -8,8 +8,8 @@ all:
 	make configure
 	make initialize
 	make build-all
-	make default-configs
-	make run-local
+#	make default-configs
+#	make run-local
 
 help:
 	@echo " [LOCAL] Please use \`make <target>\` where <target> is one of"

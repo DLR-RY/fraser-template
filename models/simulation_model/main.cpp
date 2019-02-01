@@ -22,7 +22,6 @@ int main(int argc, char* argv[]) {
 		SimulationModel simulation("simulation_model", "Simulation Environment");
 
 		if (static_cast<std::string>(argv[1]) == "--create-config-files") {
-			std::cout << "Create default configuration files" << std::endl;
 			simulation.setConfigMode(true);
 			simulation.saveState(configFilePath);
 
