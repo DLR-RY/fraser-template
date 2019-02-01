@@ -14,11 +14,22 @@
 #ifndef LOGGER_LOGGER_H_
 #define LOGGER_LOGGER_H_
 
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/utility/setup/file.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/support/date_time.hpp>
+#include <boost/log/utility/setup/console.hpp>
+#include <boost/log/expressions/formatters/date_time.hpp>
+#include <boost/log/expressions/formatters/stream.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
+
+#include <boost/serialization/serialization.hpp>
+#include <boost/archive/xml_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+
 #include <zmq.hpp>
 
 #include "communication/zhelpers.hpp"
@@ -26,9 +37,12 @@
 #include "communication/Publisher.h"
 #include "communication/Dealer.h"
 #include "interfaces/IModel.h"
+#include "interfaces/IPersist.h"
+#include "data-types/Field.h"
+
 #include "resources/idl/event_generated.h"
 
-class Logger: public virtual IModel {
+class Logger: public virtual IModel, public virtual IPersist {
 public:
 	Logger(std::string name, std::string description);
 	virtual ~Logger() = default;
@@ -44,6 +58,10 @@ public:
 	virtual std::string getDescription() const override {
 		return mDescription;
 	}
+
+	// IPersist
+	virtual void saveState(std::string filename) override;
+	virtual void loadState(std::string filename) override;
 
 private:
 	// IModel
@@ -62,7 +80,16 @@ private:
 	flatbuffers::Offset<event::Event> mEventOffset;
 
 	bool mRun;
-	int mCurrentSimTime;
+	uint64_t mCurrentSimTime;
+
+	friend class boost::serialization::access;
+	template<typename Archive>
+	void serialize(Archive& archive, const unsigned int) {
+		archive & boost::serialization::make_nvp("DebugMode", mDebugMode);
+	}
+
+	// Fields
+	Field<bool> mDebugMode;
 };
 
 #endif

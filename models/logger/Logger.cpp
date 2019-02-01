@@ -13,28 +13,43 @@
 
 #include <iostream>
 #include "Logger.h"
+#include "ColorFormatter.h"
 
 namespace logging = boost::log;
+namespace sinks = boost::log::sinks;
 namespace keywords = boost::log::keywords;
 
 Logger::Logger(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
-				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0) {
+				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0), mDebugMode(
+				"DebugMode", false) {
 
 	mRun = prepare();
-	init();
 }
 
 void Logger::init() {
+
 	logging::register_simple_formatter_factory<logging::trivial::severity_level,
 			char>("Severity");
 
-	logging::add_file_log(keywords::file_name = "sample.log", keywords::format =
-			"[%TimeStamp%] [%ThreadID%] [%Severity%] %Message%", keywords::auto_flush = true);
+	if (mDebugMode.getValue()) {
+		typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
+		boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
 
-	logging::core::get()->set_filter(
-			logging::trivial::severity >= logging::trivial::info);
+		// We have to provide an empty deleter to avoid destroying the global stream object
+		boost::shared_ptr<std::ostream> stream(&std::cout,
+				boost::null_deleter());
+		sink->locked_backend()->add_stream(stream);
 
+		sink->set_formatter(&coloringFormatter);
+
+		logging::core::get()->add_sink(sink);
+
+	}
+
+	logging::add_file_log(keywords::file_name = "%y-%m-%d_%3N.log",
+			keywords::format = "[%TimeStamp%] [%Severity%] %Message%",
+			keywords::auto_flush = true);
 	logging::add_common_attributes();
 }
 
@@ -57,13 +72,15 @@ bool Logger::prepare() {
 		}
 	}
 
+	mSubscriber.subscribeTo("LoadState");
+	mSubscriber.subscribeTo("SaveState");
 	mSubscriber.subscribeTo("LogTrace");
 	mSubscriber.subscribeTo("LogDebug");
 	mSubscriber.subscribeTo("LogInfo");
 	mSubscriber.subscribeTo("LogWarning");
 	mSubscriber.subscribeTo("LogError");
 	mSubscriber.subscribeTo("LogFatal");
-	mSubscriber.subscribeTo("End");
+	mSubscriber.subscribeTo("EndLogger");
 
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
@@ -99,30 +116,85 @@ void Logger::handleEvent() {
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
 		if (dataRef.IsString()) {
-			auto logMsg = dataRef.ToString();
+			auto dataString = dataRef.ToString();
 
-			if (eventName == "LogTrace") {
-				BOOST_LOG_TRIVIAL(trace)<< logMsg.data();
+			if (eventName == "SaveState") {
+				saveState(dataString + mName + ".config");
+			} else if (eventName == "LoadState") {
+				loadState(dataString + mName + ".config");
+			} else {
+				if (eventName == "LogTrace") {
+					BOOST_LOG_TRIVIAL(trace)<< dataString.data();
 
-			} else if (eventName == "LogDebug") {
-				BOOST_LOG_TRIVIAL(debug) << logMsg.data();
+				} else if (eventName == "LogDebug") {
+					BOOST_LOG_TRIVIAL(debug) << dataString.data();
 
-			} else if (eventName == "LogInfo") {
-				BOOST_LOG_TRIVIAL(info) << logMsg.data();
+				} else if (eventName == "LogInfo") {
+					BOOST_LOG_TRIVIAL(info) << dataString.data();
 
-			} else if (eventName == "LogWarning") {
-				BOOST_LOG_TRIVIAL(warning) << logMsg.data();
+				} else if (eventName == "LogWarning") {
+					BOOST_LOG_TRIVIAL(warning) << dataString.data();
 
-			} else if (eventName == "LogError") {
-				BOOST_LOG_TRIVIAL(error) << logMsg.data();
+				} else if (eventName == "LogError") {
+					BOOST_LOG_TRIVIAL(error) << dataString.data();
 
-			} else if (eventName == "LogFatal") {
-				BOOST_LOG_TRIVIAL(fatal) << logMsg.data();
+				} else if (eventName == "LogFatal") {
+					BOOST_LOG_TRIVIAL(fatal) << dataString.data();
 
+				}
+				std::cin.get();
 			}
-			std::cin.get();
 		}
-	} else if (eventName == "End") {
+	} else if (eventName == "EndLogger") {
 		mRun = false;
 	}
 }
+
+void Logger::saveState(std::string filePath) {
+	// Store states
+	std::ofstream ofs(filePath);
+	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
+	try {
+		oa << boost::serialization::make_nvp("FieldSet", *this);
+
+	} catch (boost::archive::archive_exception& ex) {
+		std::cout << mName << ": Archive Exception during serializing:"
+				<< std::endl;
+		std::cout << ex.what() << std::endl;
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during serializing");
+	}
+
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " stored its state");
+
+	mRun = mSubscriber.synchronizeSub();
+}
+
+void Logger::loadState(std::string filePath) {
+	// Restore states
+	std::ifstream ifs(filePath);
+	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
+	try {
+		ia >> boost::serialization::make_nvp("FieldSet", *this);
+
+	} catch (boost::archive::archive_exception& ex) {
+		std::cout << mName << ": Archive Exception during deserializing:"
+				<< std::endl;
+		std::cout << ex.what() << std::endl;
+		// Log
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Archive Exception during deserializing");
+	}
+
+	// Log
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " restored its state");
+
+	init();
+
+	mRun = mSubscriber.synchronizeSub();
+}
+
