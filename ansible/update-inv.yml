@@ -15,7 +15,5 @@
 ---
 - hosts: localhost
   gather_facts: no
-  vars:
-    - hosts_config_path: ../hosts-configs/
   roles:
     - { role: update-inventory, tags: update-inventory }

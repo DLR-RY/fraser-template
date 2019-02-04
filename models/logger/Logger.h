@@ -44,7 +44,7 @@
 
 class Logger: public virtual IModel, public virtual IPersist {
 public:
-	Logger(std::string name, std::string description);
+	Logger(std::string name, std::string description, std::string logFilePath);
 	virtual ~Logger() = default;
 
 	// IModel
@@ -72,7 +72,6 @@ private:
 	void handleEvent();
 	zmq::context_t mCtx;
 	Subscriber mSubscriber;
-	Publisher mPublisher;
 	Dealer mDealer;
 
 	// Event Serialization
@@ -90,6 +89,8 @@ private:
 
 	// Fields
 	Field<bool> mDebugMode;
+
+	std::string mLogFilesPath;
 };
 
 #endif

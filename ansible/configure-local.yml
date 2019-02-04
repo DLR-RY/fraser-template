@@ -13,6 +13,7 @@
 # - 2018, Annika Ofenloch (DLR RY-AVS)
 
 - hosts: localhost
+  connection: local
   gather_facts: no
   become: True
   roles:

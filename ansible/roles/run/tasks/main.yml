@@ -17,29 +17,31 @@
   # Execute models local or remote
   # -------------------------------------------------------------------
 - name: Run configuration server on the host
-  command: "{{ remote_home_path }}/tmp_simulation/models/configuration_server/build/bin/configuration_server --config-file {{ remote_home_path }}/tmp_simulation/hosts_config.xml"
+  command: "{{ remote_home_path }}/models/configuration_server/build/bin/configuration_server --config-file {{ remote_home_path }}/hosts-configs/{{ hosts_config_filepath | basename }}"
   async: 1000
   poll: 0
-  changed_when: False
-  
-- name: Run models on the hosts
-  command: "{{ remote_home_path }}/tmp_simulation/models/{{ item }}/build/bin/{{ item }}"
-  async: 1000
-  poll: 0
-  loop: "{{ hostvars[inventory_hostname]['models'] }}"
-  when:
-    - item != "simulation_model"
-    - item != "configuration_server"
-  changed_when: False
-  
-- name: Run simulation model on the host
-  command: "{{ remote_home_path }}/tmp_simulation/models/{{ item }}/build/bin/{{ item }} --load-config {{ remote_home_path }}/tmp_simulation/configurations/{{ config_path }}/"
-  loop: "{{ hostvars[inventory_hostname]['models'] }}"
-  when: item == "simulation_model"
-  register: sim_out
   changed_when: False
 
-- debug: var="{{ item.stdout_lines }}"
-  loop: "{{ sim_out.results }}"
-  when: item.stdout_lines is defined
+- name: Run models on the hosts
+  shell: "{{ remote_home_path }}/models/{{ item.0.path | basename }}/build/bin/{{ item.0.path | basename }} -n {{ item.1 }}"
+  async: 1000
+  poll: 0
+  with_subelements:
+    - "{{ models }}"
+    - instances
+  when:
+    - 'not "simulation_model" in item.1'
+    - 'not "configuration_server" in item.1'
+    - 'not "logger" in item.1'
+  changed_when: False
+
+- name: Run simulation model on the host
+  shell: "{{ remote_home_path }}/models/simulation_model/build/bin/simulation_model --load-config {{ remote_home_path }}/configurations/{{ config_path | basename }}/"
+  async: 1000
+  poll: 0
+  changed_when: False
+
+- name: Run logger model locally
+  shell: "{{ remote_home_path }}/models/logger/build/bin/logger --log-files-path {{ remote_home_path }}/logs/"
+  changed_when: False
   # -------------------------------------------------------------------

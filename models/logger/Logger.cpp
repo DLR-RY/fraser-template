@@ -19,19 +19,17 @@ namespace logging = boost::log;
 namespace sinks = boost::log::sinks;
 namespace keywords = boost::log::keywords;
 
-Logger::Logger(std::string name, std::string description) :
-		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
-				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0), mDebugMode(
-				"DebugMode", false) {
+Logger::Logger(std::string name, std::string description,
+		std::string logFilePath) :
+		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mDealer(
+				mCtx, mName), mCurrentSimTime(0), mDebugMode("DebugMode",
+				false), mLogFilesPath(logFilePath) {
 
 	mRun = prepare();
+	init();
 }
 
 void Logger::init() {
-
-	logging::register_simple_formatter_factory<logging::trivial::severity_level,
-			char>("Severity");
-
 	if (mDebugMode.getValue()) {
 		typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
 		boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
@@ -44,31 +42,29 @@ void Logger::init() {
 		sink->set_formatter(&coloringFormatter);
 
 		logging::core::get()->add_sink(sink);
+	} else {
+		logging::register_simple_formatter_factory<
+				logging::trivial::severity_level, char>("Severity");
 
+		logging::add_file_log(
+				keywords::file_name = mLogFilesPath + "%Y-%m-%d_%H-%M-%S.log",
+				keywords::format = "[%TimeStamp%] [%Severity%] %Message%",
+				keywords::auto_flush = true);
+
+		logging::add_common_attributes();
 	}
-
-	logging::add_file_log(keywords::file_name = "%y-%m-%d_%3N.log",
-			keywords::format = "[%TimeStamp%] [%Severity%] %Message%",
-			keywords::auto_flush = true);
-	logging::add_common_attributes();
 }
 
 bool Logger::prepare() {
 	mSubscriber.setOwnershipName(mName);
 
-	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName))) {
-		return false;
-	}
-
-	if (!mSubscriber.connectToPub(mDealer.getIPFrom("simulation_model"),
-			mDealer.getPortNumFrom("simulation_model"))) {
-		return false;
-	}
-
-	for (auto depModel : mDealer.getModelDependencies()) {
-		if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
-				mDealer.getPortNumFrom(depModel))) {
-			return false;
+	// Connect to all models but not to itself
+	for (auto depModel : mDealer.getAllModelNames()) {
+		if (depModel != mName) {
+			if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
+					mDealer.getPortNumFrom(depModel))) {
+				return false;
+			}
 		}
 	}
 
@@ -158,17 +154,8 @@ void Logger::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during serializing:"
-				<< std::endl;
-		std::cout << ex.what() << std::endl;
-		// Log
-		mPublisher.publishEvent("LogError", mCurrentSimTime,
-				mName + ": Archive Exception during serializing");
+		throw ex.what();
 	}
-
-	// Log
-	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
-			mName + " stored its state");
 
 	mRun = mSubscriber.synchronizeSub();
 }
@@ -181,20 +168,10 @@ void Logger::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during deserializing:"
-				<< std::endl;
-		std::cout << ex.what() << std::endl;
-		// Log
-		mPublisher.publishEvent("LogError", mCurrentSimTime,
-				mName + ": Archive Exception during deserializing");
+		throw ex.what();
 	}
 
-	// Log
-	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
-			mName + " restored its state");
-
 	init();
-
 	mRun = mSubscriber.synchronizeSub();
 }
 

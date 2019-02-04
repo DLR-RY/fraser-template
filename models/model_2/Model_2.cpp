@@ -122,7 +122,7 @@ void Model2::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << ex.what() << std::endl;
+		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
@@ -142,10 +142,7 @@ void Model2::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << mName << ": Archive Exception during deserializing:"
-				<< std::endl;
-		std::cout << ex.what() << std::endl;
-
+		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");

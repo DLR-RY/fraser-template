@@ -154,7 +154,6 @@ void Queue::saveState(std::string filePath) {
 
 	} catch (boost::archive::archive_exception& ex) {
 		throw ex.what();
-
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
@@ -177,7 +176,6 @@ void Queue::loadState(std::string filePath) {
 
 	} catch (boost::archive::archive_exception& ex) {
 		throw ex.what();
-
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");

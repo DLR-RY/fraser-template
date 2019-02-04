@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #include "ConfigurationServer.h"
@@ -18,7 +18,6 @@
 ConfigurationServer::ConfigurationServer(std::string modelsConfigFilePath) :
 		mModelsConfigFilePath(modelsConfigFilePath), mCtx(1), mFrontend(mCtx,
 		ZMQ_ROUTER) {
-	std::cout << "ConfigurationServer-Model Constructor" << std::endl;
 
 	registerInterruptSignal();
 	mRun = this->prepare();
@@ -32,16 +31,11 @@ ConfigurationServer::ConfigurationServer(std::string modelsConfigFilePath) :
 		try {
 			mFrontend.bind("tcp://*:" + FRONTEND_PORT);
 		} catch (std::exception &e) {
-			std::cout << "Could not bind to frontend port of configuration server: "
-			<< e.what() << std::endl;
+			throw e.what();
 			mRun = false;
 		}
 
-	} else {
-		std::cout << "Error: Exit configuration model (Something went wrong)"
-		<< std::endl;
 	}
-
 }
 
 ConfigurationServer::~ConfigurationServer() {
@@ -53,8 +47,7 @@ bool ConfigurationServer::prepare() {
 			mModelsConfigFilePath.c_str());
 
 	if (!result) {
-		std::cout << "Parse error: " << result.description()
-				<< ", character pos= " << result.offset;
+		throw result.description();
 		return false;
 	} else {
 		mRootNode = mDocument.document_element();
@@ -65,9 +58,6 @@ bool ConfigurationServer::prepare() {
 void ConfigurationServer::setMinAndMaxPort() {
 	mMinPort = mRootNode.child("Hosts").attribute("minPort").as_int();
 	mMaxPort = mRootNode.child("Hosts").attribute("maxPort").as_int();
-
-	std::cout << "minPort: " << mMinPort << std::endl;
-	std::cout << "maxPort: " << mMaxPort << std::endl;
 }
 
 bool ConfigurationServer::setModelPortNumbers() {
@@ -75,13 +65,11 @@ bool ConfigurationServer::setModelPortNumbers() {
 
 	for (auto name : mModelNames) {
 		if (portCnt > mMaxPort) {
-			std::cout << "Error: Exceeded max. port number (" << mMaxPort
-					<< ") --> Increase the interval" << std::endl;
+			throw "[Error] Exceeded max. port number --> Increase the interval";
 			return false;
 		}
 
 		mModelInformation[name + "_port"] = std::to_string(portCnt);
-		std::cout << name << ": " << std::to_string(portCnt) << std::endl;
 		portCnt++;
 	}
 
@@ -184,12 +172,10 @@ void ConfigurationServer::run() {
 
 	while (mRun) {
 		std::string identity = s_recv(mFrontend);
-		//std::cout << "Identity: " << identity << std::endl;
 		std::string msg = s_recv(mFrontend);
-		//std::cout << "Msg: " << msg << std::endl;
 
 		if (msg == "End") {
-			// Stop the DNS server
+			// Stop the configuration server
 			break;
 		}
 

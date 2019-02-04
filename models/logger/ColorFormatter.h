@@ -1,8 +1,14 @@
 /*
- * ColorFormatter.h
+ * Copyright (c) 2019, German Aerospace Center (DLR)
  *
- *  Created on: Feb 1, 2019
- *      Author: user
+ * This file is part of the development version of FRASER.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Authors:
+ * - 2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #ifndef MODELS_LOGGER_COLORFORMATTER_H_
@@ -12,8 +18,6 @@
 #include <boost/log/expressions.hpp>
 
 namespace logging = boost::log;
-namespace sinks = boost::log::sinks;
-namespace keywords = boost::log::keywords;
 
 void coloringFormatter(logging::record_view const& record,
 		logging::formatting_ostream& stream) {

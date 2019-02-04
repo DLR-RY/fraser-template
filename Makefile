@@ -1,4 +1,5 @@
 hosts_config_file?=config1.xml
+remote_home_path?=~/tmp_simulation
 model?=
 ANSIBLE_DIR := ansible
 
@@ -53,10 +54,10 @@ run-local:
 	ansible-playbook $(ANSIBLE_DIR)/run-local.yml --connection=local -i ./ansible/inventory/hosts
 
 deploy:
-	ansible-playbook $(ANSIBLE_DIR)/deploy.yml -i ./ansible/inventory/hosts
+	ansible-playbook $(ANSIBLE_DIR)/deploy.yml -i ./ansible/inventory/hosts -e remote_home_path=$(remote_home_path)
 
 run-remote:
-	ansible-playbook $(ANSIBLE_DIR)/run.yml -i ./ansible/inventory/hosts
+	ansible-playbook $(ANSIBLE_DIR)/run.yml -i ./ansible/inventory/hosts -e remote_home_path=$(remote_home_path)
 
 list-models-info:
 	cat ansible/inventory/group_vars/all/main.yml

@@ -24,13 +24,13 @@
     
   # Create hosts file (inventory file)
 - name: Build hosts file
-  command: python3.6 ../fraser/scripts/hostsGenerator.py -f {{ hosts_config_path }}{{hosts_config_file}} -d ../ansible/
+  command: python3.6 ../fraser/scripts/hostsGenerator.py -f ../hosts-configs/{{hosts_config_file}} -d ../ansible/
   changed_when: False
 - meta: refresh_inventory
 
   # Define global variables
 - name: Build variables file
-  command: python3.6 ../fraser/scripts/modelsVarsGenerator.py -f {{ hosts_config_path }}{{hosts_config_file}} -d ../ansible/
+  command: python3.6 ../fraser/scripts/modelsVarsGenerator.py -f ../hosts-configs/{{hosts_config_file}} -d ../ansible/
   changed_when: False
 
 - name: Include main.yml file in group_vars/all (includes global variables)

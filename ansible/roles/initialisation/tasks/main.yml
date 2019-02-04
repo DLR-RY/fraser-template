@@ -1,7 +1,7 @@
 #!/usr/bin/env pythonNone
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017-2018, German Aerospace Center (DLR)
+# Copyright (c) 2017-2019, German Aerospace Center (DLR)
 #
 # This file is part of the development version of FRASER.
 #
@@ -10,7 +10,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Authors:
-# - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+# - 2017-2019, Annika Ofenloch (DLR RY-AVS)
 
 ---
   # ---------------------------------------------------------
@@ -22,6 +22,7 @@
     - "../models"
     - "../configurations"          
     - "../fraser"
+    - "../logs"
 
   # Create folders if they not exist
 - name: Check if resource/idl folders exists
@@ -32,23 +33,23 @@
   # -------------------------------------------------------
   # All models have all available IDLs of the other models.
   # -------------------------------------------------------
-- name: Dissolve event-data dependencies between the models (fbs-files)
-  copy:
-    src: "{{ item.1.path }}/resources/idl/"
-    dest: "{{ item.0.path }}/resources/idl/"
-  with_nested:
-    - "{{ models }}"
-    - "{{ models }}"
-  when:
-    - 'not "configuration_server" in item.0.instances'
-    - 'not "configuration_server" in item.1.instances'
-
-- name: Find Flatbuffers files ending with .fbs
-  find:
-    paths: ../models
-    patterns: "*.fbs"
-    recurse: yes
-  register: fbsfiles
+#- name: Dissolve event-data dependencies between the models (fbs-files)
+#  copy:
+#    src: "{{ item.1.path }}/resources/idl/"
+#    dest: "{{ item.0.path }}/resources/idl/"
+#  with_nested:
+#    - "{{ models }}"
+#    - "{{ models }}"
+#  when:
+#    - 'not "configuration_server" in item.0.instances'
+#    - 'not "configuration_server" in item.1.instances'
+#
+#- name: Find Flatbuffers files ending with .fbs
+#  find:
+#    paths: ../models
+#    patterns: "*.fbs"
+#    recurse: yes
+#  register: fbsfiles
 
 - name: Copy default event (fbs-file) to the models
   copy:
@@ -57,38 +58,38 @@
   loop: "{{ models }}"
   when: 'not "configuration_server" in item.instances'
 
-- name: Include specific eventdata-fbs into default event-fbs
-  lineinfile:
-    path: "{{ item[0].path }}/resources/idl/event.fbs"
-    insertafter: "// event.fbs"
-    line: 'include "{{ item[1].path | basename }}";'
-  when:
-    - item[1].path is search(item[0].path)
-    - 'not "configuration_server" in item[0].instances'
-    - (item[1].path | basename) != "event.fbs"
-  with_nested:
-    - "{{ models }}"
-    - "{{ fbsfiles.files }}"
-    
-- name: Read fbs-data files
-  command: python3.6 ../fraser/scripts/fbsDataReader.py -f {{ item.path }}
-  loop: "{{ fbsfiles.files }}"
-  when: (item.path | basename) != "event.fbs"
-  register: datanames
-  changed_when: False
-    
-- name: Add specific eventdata-fbs to union type of default event-fbs
-  lineinfile:
-    path: "{{ item[0].path }}/resources/idl/event.fbs"
-    insertafter: "String:string,"
-    line: '{{ item[1].stdout }},'
-  when:
-    - item[1].item.path is search(item[0].path)
-    - 'not "configuration_server" in item[0].instances'
-    - item[1].stdout is defined
-  with_nested:
-    - "{{ models }}"
-    - "{{ datanames.results }}"
+#- name: Include specific eventdata-fbs into default event-fbs
+#  lineinfile:
+#    path: "{{ item[0].path }}/resources/idl/event.fbs"
+#    insertafter: "// event.fbs"
+#    line: 'include "{{ item[1].path | basename }}";'
+#  when:
+#    - item[1].path is search(item[0].path)
+#    - 'not "configuration_server" in item[0].instances'
+#    - (item[1].path | basename) != "event.fbs"
+#  with_nested:
+#    - "{{ models }}"
+#    - "{{ fbsfiles.files }}"
+#
+#- name: Read fbs-data files
+#  command: python3.6 ../fraser/scripts/fbsDataReader.py -f {{ item.path }}
+#  loop: "{{ fbsfiles.files }}"
+#  when: (item.path | basename) != "event.fbs"
+#  register: datanames
+#  changed_when: False
+#
+#- name: Add specific eventdata-fbs to union type of default event-fbs
+#  lineinfile:
+#    path: "{{ item[0].path }}/resources/idl/event.fbs"
+#    insertafter: "String:string,"
+#    line: '{{ item[1].stdout }},'
+#  when:
+#    - item[1].item.path is search(item[0].path)
+#    - 'not "configuration_server" in item[0].instances'
+#    - item[1].stdout is defined
+#  with_nested:
+#    - "{{ models }}"
+#    - "{{ datanames.results }}"
   
   # -------------------------------------------------------
   # Generate C++ headers from the flatbuffers

@@ -19,37 +19,30 @@
 - name: Copy hosts configuration file to the remote hosts for the configuration server
   copy:
     src: "{{ hosts_config_filepath }}"
-    dest: "{{ remote_home_path }}/tmp_simulation/hosts_config.xml"
-
-- name: Copy configuration server directory to the remote hosts
-  copy:
-    src: ../models/configuration_server
-    dest: "{{ remote_home_path }}/tmp_simulation/models"
+    dest: "{{ remote_home_path }}/hosts-configs/"
 
 - name: Copy model directory to the remote hosts
   copy:
-    src: ../models/{{ item }}
-    dest: "{{ remote_home_path }}/tmp_simulation/models"
-  loop: "{{ hostvars[inventory_hostname]['models'] }}"
-  when: item != "configuration_server"
+    src: "{{ item.path }}"
+    dest: "{{ remote_home_path }}/models"
+  loop: "{{ models }}"
 
-- name: Check if configuration folder exists
-  file: path="{{ remote_home_path }}/tmp_simulation/configurations/{{ config_path }}" state=directory
+- name: Check if folders exists
+  file: path="{{ item }}" state=directory
+  loop:
+    - "{{ remote_home_path }}/configurations/{{ config_path | basename }}"
+    - "{{ remote_home_path }}/logs"
 
 - name: Copy configuration file to remote hosts
   copy:
-    src: ../configurations/{{ config_path }}/{{ item }}.config
-    dest: "{{ remote_home_path }}/tmp_simulation/configurations/{{ config_path }}/"
-  loop: "{{ hostvars[inventory_hostname]['models'] }}"
-  when: item != "configuration_server"
-  
-- name: Copy resources to remote hosts
-  copy:
-    src: ../resources/idl
-    dest: "{{ remote_home_path }}/tmp_simulation/resources"
-  loop: "{{ hostvars[inventory_hostname]['models'] }}"
-  when: item != "configuration_server"
+    src: ../configurations/{{ config_path | basename }}/{{ item.1 }}.config
+    dest: "{{ remote_home_path }}/configurations/{{ config_path | basename }}/"
+  with_subelements:
+    - "{{ models }}"
+    - instances
+  when:
+    - 'not "configuration_server" in item.1'
 
 - name: Fix 'tmp-folder' permission
-  file: path=tmp_simulation owner=user mode=0775 state=directory recurse=yes
+  file: path=tmp_simulation owner={{ lookup('env', 'USER') }} mode=0775 state=directory recurse=yes
   # -------------------------------------------------------------------

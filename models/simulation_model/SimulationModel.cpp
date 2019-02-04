@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #include "SimulationModel.h"
@@ -44,20 +44,20 @@ bool SimulationModel::prepare() {
 		return false;
 	}
 
-	// Synchronization
+	// Prepare Synchronization
 	if (!mPublisher.preparePubSynchronization(
 			mDealer.getSynchronizationPort())) {
 		return false;
 	}
 
 	// (mTotalNumOfModels - 2), because the simulation and configuration models should not be included
-	std::cout
-			<< "Synchronize simulation model with the other models (after preparation phase)."
-			<< std::endl;
 	if (!mPublisher.synchronizePub(mTotalNumOfModels - 2,
 			mCurrentSimTime.getValue())) {
 		return false;
 	}
+
+	mPublisher.publishEvent("LogInfo", 0,
+			"Synchronized simulation model with the other models (after preparation phase)");
 
 	return true;
 }
@@ -68,18 +68,18 @@ void SimulationModel::run() {
 		while (currentSimTime <= mSimTime.getValue()) {
 			if (!mPause) {
 
-				for (auto savepoint : getSavepoints()) {
-					if (currentSimTime == savepoint) {
-						std::string filePath = "../savepoints/savepnt_"
-								+ std::to_string(savepoint) + "/" + mName
-								+ ".config";
-
-						this->saveState(filePath);
-						break;
-					}
-				}
-
-				// Log info
+				// TODO: Test to set savepoints
+//				for (auto savepoint : getSavepoints()) {
+//					if (currentSimTime == savepoint) {
+//						std::string filePath = "../savepoints/savepnt_"
+//								+ std::to_string(savepoint) + "/" + mName
+//								+ ".config";
+//
+//						this->saveState(filePath);
+//						break;
+//					}
+//				}
+				// Log
 				mPublisher.publishEvent("LogInfo", currentSimTime,
 						"Simulation Time: " + std::to_string(currentSimTime));
 
@@ -122,26 +122,24 @@ void SimulationModel::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << ex.what() << std::endl;
-
+		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", 0,
 				mName + ": Archive Exception during deserializing");
 	}
-
 	// Event Data Serialization
 	mPublisher.publishEvent("LoadState", mCurrentSimTime.getValue(), filePath);
 
-	this->init();
+	init();
 
 	// Synchronization is necessary, because the simulation
 	// has to wait until the other models finished their Restore-method
 	// (mNumOfPersistModels - 1), because the simulation model itself should not be included
-	std::cout
-			<< "Synchronize simulation model with the other models (after initialization phase)."
-			<< std::endl;
 	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1,
 			mCurrentSimTime.getValue());
+
+	mPublisher.publishEvent("LogInfo", 0,
+			"Synchronized simulation model with the other models (after initialization phase)");
 
 	this->continueSim();
 }
@@ -160,8 +158,7 @@ void SimulationModel::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		std::cout << ex.what() << std::endl;
-
+		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", 0,
 				mName + ": Archive Exception during serializing");
@@ -170,14 +167,13 @@ void SimulationModel::saveState(std::string filePath) {
 	// Synchronization is necessary, because the simulation
 	// has to wait until the other models finished their Store-method
 	// (mNumOfPersistModels - 1), because the simulation model itself should not be included
-	std::cout
-			<< "Synchronize simulation model with the other models (after save state phase)."
-			<< std::endl;
 	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1,
 			mCurrentSimTime.getValue());
 
+	mPublisher.publishEvent("LogInfo", 0,
+			"Synchronized simulation model with the other models (after save state phase)");
+
 	if (mConfigMode) {
-		// Log info
 		mPublisher.publishEvent("LogInfo", 0,
 				"Default configuration files were created");
 
