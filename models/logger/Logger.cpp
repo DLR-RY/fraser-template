@@ -118,6 +118,7 @@ void Logger::handleEvent() {
 			} else if (eventName == "LoadState") {
 				loadState(dataString + mName + ".config");
 			} else {
+
 				if (eventName == "LogTrace") {
 					BOOST_LOG_TRIVIAL(trace)<< dataString.data();
 
@@ -152,6 +153,9 @@ void Logger::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
+		std::cerr << mName << "Archive exception during serialization"
+				<< std::endl;
+
 		throw ex.what();
 	}
 
@@ -166,6 +170,8 @@ void Logger::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
+		std::cerr << mName << "Archive exception during deserialization"
+				<< std::endl;
 		throw ex.what();
 	}
 
