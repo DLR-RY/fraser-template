@@ -26,7 +26,16 @@ Logger::Logger(std::string name, std::string description,
 				false), mLogFilesPath(logFilePath) {
 
 	mRun = prepare();
-	init();
+
+	logging::register_simple_formatter_factory<logging::trivial::severity_level,
+			char>("Severity");
+
+	logging::add_file_log(
+			keywords::file_name = mLogFilesPath + "%Y-%m-%d_%H-%M-%S.log",
+			keywords::format = "[%TimeStamp%] [%Severity%] %Message%",
+			keywords::auto_flush = true);
+
+	logging::add_common_attributes();
 }
 
 void Logger::init() {
@@ -42,16 +51,6 @@ void Logger::init() {
 		sink->set_formatter(&coloringFormatter);
 
 		logging::core::get()->add_sink(sink);
-	} else {
-		logging::register_simple_formatter_factory<
-				logging::trivial::severity_level, char>("Severity");
-
-		logging::add_file_log(
-				keywords::file_name = mLogFilesPath + "%Y-%m-%d_%H-%M-%S.log",
-				keywords::format = "[%TimeStamp%] [%Severity%] %Message%",
-				keywords::auto_flush = true);
-
-		logging::add_common_attributes();
 	}
 }
 
