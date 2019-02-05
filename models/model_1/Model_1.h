@@ -74,7 +74,4 @@ private:
 	}
 };
 
-//BOOST_CLASS_VERSION(Model1, 0);
-//BOOST_CLASS_IMPLEMENTATION(Model1, boost::serialization::object_serializable)
-
 #endif

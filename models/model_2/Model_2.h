@@ -73,7 +73,4 @@ private:
 	}
 };
 
-//BOOST_CLASS_VERSION(Model2, 0);
-//BOOST_CLASS_IMPLEMENTATION(Model2, boost::serialization::object_serializable)
-
 #endif /* MODEL_2_MODEL_2_H_ */

@@ -137,7 +137,6 @@ void Logger::handleEvent() {
 					BOOST_LOG_TRIVIAL(fatal) << dataString.data();
 
 				}
-				std::cin.get();
 			}
 		}
 	} else if (eventName == "EndLogger") {

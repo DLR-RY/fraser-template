@@ -74,10 +74,6 @@ private:
 	Subscriber mSubscriber;
 	Dealer mDealer;
 
-	// Event Serialization
-	flatbuffers::FlatBufferBuilder mFbb;
-	flatbuffers::Offset<event::Event> mEventOffset;
-
 	bool mRun;
 	uint64_t mCurrentSimTime;
 
