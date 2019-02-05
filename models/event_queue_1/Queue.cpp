@@ -150,13 +150,14 @@ void Queue::saveState(std::string filePath) {
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
 
 	try {
-		oa << boost::serialization::make_nvp("EventSet", *this);
+		oa << boost::serialization::make_nvp("EventSet", mEventSet);
 
 	} catch (boost::archive::archive_exception& ex) {
-		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
+
+		throw ex.what();
 	}
 
 	// Log
@@ -172,13 +173,16 @@ void Queue::loadState(std::string filePath) {
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
 
 	try {
-		ia >> boost::serialization::make_nvp("EventSet", *this);
+		ia >> boost::serialization::make_nvp("EventSet", mEventSet);
 
 	} catch (boost::archive::archive_exception& ex) {
-		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");
+
+		std::cout << mName << ": Archive Exception during deserializing"
+				<< std::endl;
+		throw ex.what();
 	}
 
 	// Log

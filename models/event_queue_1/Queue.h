@@ -30,6 +30,7 @@
 #include "interfaces/IQueue.h"
 #include "scheduler/Scheduler.h"
 #include "data-types/Event.h"
+#include "data-types/EventSet.h"
 
 #include "resources/idl/event_generated.h"
 
@@ -62,7 +63,7 @@ private:
 	// IQueue
 	virtual void updateEvents() override;
 
-	std::vector<Event> mEventSet;
+	EventSet mEventSet;
 
 	std::string mName;
 	std::string mDescription;
@@ -70,9 +71,7 @@ private:
 	friend class boost::serialization::access;
 	template<typename Archive>
 	void serialize(Archive& archive, const unsigned int) {
-		for (auto event : mEventSet) {
-			archive & boost::serialization::make_nvp("Event", event);
-		}
+		archive & boost::serialization::make_nvp("EventSet", mEventSet);
 	}
 
 	// Subscriber & Publisher
