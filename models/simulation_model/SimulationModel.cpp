@@ -76,24 +76,31 @@ void SimulationModel::run()
 		{
 			if (!mPause)
 			{
-
-				// TODO: Test to set savepoints
-//				for (auto savepoint : getSavepoints()) {
-//					if (currentSimTime == savepoint) {
-//						std::string filePath = "../savepoints/savepnt_"
-//								+ std::to_string(savepoint) + "/" + mName
-//								+ ".config";
-//
-//						this->saveState(filePath);
-//						break;
-//					}
-//				}
 				// Log
 				mPublisher.publishEvent("LogInfo", currentSimTime,
 						"Simulation Time: " + std::to_string(currentSimTime));
 
 				// Publish current simulation time
 				mPublisher.publishEvent("SimTimeChanged", currentSimTime);
+
+				for (auto savepoint : getSavepoints())
+				{
+					if (currentSimTime == savepoint)
+					{
+						std::string filePath = "configurations/savepnt_"
+								+ std::to_string(savepoint) + "/";
+
+						boost::filesystem::path dir(filePath);
+						if (boost::filesystem::create_directory(dir))
+						{
+							mPublisher.publishEvent("LogInfo", currentSimTime,
+									"Directory Created: " + filePath);
+						}
+
+						saveState(filePath);
+						break;
+					}
+				}
 
 				std::this_thread::sleep_for(
 						std::chrono::milliseconds(mCycleTime.getValue()));
@@ -109,7 +116,7 @@ void SimulationModel::run()
 		}
 	}
 
-	this->stopSim();
+	stopSim();
 }
 
 void SimulationModel::stopSim()
@@ -125,7 +132,8 @@ void SimulationModel::stopSim()
 
 void SimulationModel::loadState(std::string filePath)
 {
-	this->pauseSim();
+	pauseSim();
+	auto currentSimTime = mCurrentSimTime.getValue();
 
 	// Restore states
 	std::ifstream ifs(filePath + mName + ".config");
@@ -137,33 +145,33 @@ void SimulationModel::loadState(std::string filePath)
 	} catch (boost::archive::archive_exception& ex)
 	{
 		// Log
-		mPublisher.publishEvent("LogError", 0,
+		mPublisher.publishEvent("LogError", currentSimTime,
 				mName + ": Archive Exception during deserializing");
 		throw ex.what();
 	}
 	// Event Data Serialization
-	mPublisher.publishEvent("LoadState", mCurrentSimTime.getValue(), filePath);
+	mPublisher.publishEvent("LoadState", currentSimTime, filePath);
 
 	init();
 
 	// Synchronization is necessary, because the simulation
 	// has to wait until the other models finished their Restore-method
 	// (mNumOfPersistModels - 1), because the simulation model itself should not be included
-	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1,
-			mCurrentSimTime.getValue());
+	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1, currentSimTime);
 
-	mPublisher.publishEvent("LogInfo", 0,
+	mPublisher.publishEvent("LogInfo", currentSimTime,
 			"Synchronized simulation model with the other models (after initialization phase)");
 
-	this->continueSim();
+	continueSim();
 }
 
 void SimulationModel::saveState(std::string filePath)
 {
-	this->pauseSim();
+	pauseSim();
+	auto currentSimTime = mCurrentSimTime.getValue();
 
 	// Event Data Serialization
-	mPublisher.publishEvent("SaveState", mCurrentSimTime.getValue(), filePath);
+	mPublisher.publishEvent("SaveState", currentSimTime, filePath);
 
 	// Store states
 	std::ofstream ofs(filePath + mName + ".config");
@@ -176,7 +184,7 @@ void SimulationModel::saveState(std::string filePath)
 	} catch (boost::archive::archive_exception& ex)
 	{
 		// Log
-		mPublisher.publishEvent("LogError", 0,
+		mPublisher.publishEvent("LogError", currentSimTime,
 				mName + ": Archive Exception during serializing");
 		throw ex.what();
 	}
@@ -184,18 +192,17 @@ void SimulationModel::saveState(std::string filePath)
 	// Synchronization is necessary, because the simulation
 	// has to wait until the other models finished their Store-method
 	// (mNumOfPersistModels - 1), because the simulation model itself should not be included
-	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1,
-			mCurrentSimTime.getValue());
+	mRun = mPublisher.synchronizePub(mNumOfPersistModels - 1, currentSimTime);
 
-	mPublisher.publishEvent("LogInfo", 0,
+	mPublisher.publishEvent("LogInfo", currentSimTime,
 			"Synchronized simulation model with the other models (after save state phase)");
 
 	if (mConfigMode)
 	{
-		mPublisher.publishEvent("LogInfo", 0,
+		mPublisher.publishEvent("LogInfo", currentSimTime,
 				"Default configuration files were created");
 
-		this->stopSim();
+		stopSim();
 	} else
 	{
 		this->continueSim();

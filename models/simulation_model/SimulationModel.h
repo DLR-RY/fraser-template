@@ -23,6 +23,7 @@
 #include <boost/serialization/serialization.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
+#include <boost/filesystem.hpp>
 
 #include "data-types/SavepointSet.h"
 #include "interfaces/IModel.h"

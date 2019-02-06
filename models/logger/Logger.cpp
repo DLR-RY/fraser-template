@@ -119,7 +119,7 @@ void Logger::handleEvent()
 	auto receivedEvent = event::GetEvent(eventBuffer);
 	std::string eventName = receivedEvent->name()->str();
 	mCurrentSimTime = receivedEvent->timestamp();
-	mRun = !foundCriticalSimCycle(mCurrentSimTime);
+//	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
 	if (receivedEvent->event_data() != nullptr)
 	{
