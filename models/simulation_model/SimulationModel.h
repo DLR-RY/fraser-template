@@ -34,7 +34,8 @@
 
 #include "resources/idl/event_generated.h"
 
-class SimulationModel: public virtual IModel, public virtual IPersist {
+class SimulationModel: public virtual IModel, public virtual IPersist
+{
 public:
 	SimulationModel(std::string name, std::string description);
 
@@ -44,10 +45,12 @@ public:
 	virtual void init() override;
 	virtual bool prepare() override;
 	virtual void run() override;
-	virtual std::string getName() const override {
+	virtual std::string getName() const override
+	{
 		return mName;
 	}
-	virtual std::string getDescription() const override {
+	virtual std::string getDescription() const override
+	{
 		return mDescription;
 	}
 
@@ -55,34 +58,40 @@ public:
 	virtual void saveState(std::string configPath) override;
 	virtual void loadState(std::string configPath) override;
 
-	void pauseSim() {
+	void pauseSim()
+	{
 		mPause = true;
 	}
 
-	void continueSim() {
+	void continueSim()
+	{
 		mPause = false;
 	}
 
 	void stopSim();
 
-	void setConfigMode(bool status) {
+	void setConfigMode(bool status)
+	{
 		mConfigMode = status;
 	}
 
 	// Properties
-	int getCurrentSimTime() {
+	int getCurrentSimTime()
+	{
 		return mCurrentSimTime.getValue();
 	}
 
 	/** Set a breakpoint (given in simulation time, e.g. 200 time units).
 	 * If the simulation reaches a breakpoint (e.g. after 200 time units),
 	 * the store method of all subscribed models and of the simulation-model itself is called. **/
-	void setSavepoint(uint64_t time) {
+	void setSavepoint(uint64_t time)
+	{
 		mSavepoints.push_back(time);
 	}
 
 	/** Get all breakpoint which were defined. **/
-	std::vector<uint64_t> getSavepoints() {
+	std::vector<uint64_t> getSavepoints()
+	{
 		return mSavepoints;
 	}
 
@@ -107,7 +116,8 @@ private:
 
 	friend class boost::serialization::access;
 	template<typename Archive>
-	void serialize(Archive& archive, const unsigned int) {
+	void serialize(Archive& archive, const unsigned int)
+	{
 		archive & boost::serialization::make_nvp("IntField", mSimTime);
 		archive & boost::serialization::make_nvp("IntField", mSimTimeStep);
 		archive & boost::serialization::make_nvp("IntField", mCurrentSimTime);

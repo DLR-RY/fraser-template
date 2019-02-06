@@ -13,37 +13,48 @@
 
 #include "Model_2.h"
 
-int main(int argc, char* argv[]) {
-	if (argc > 2) {
+int main(int argc, char* argv[])
+{
+	if (argc > 2)
+	{
 		bool validArgs = true;
 		std::string modelName = "";
 
-		if (static_cast<std::string>(argv[1]) == "-n") {
+		if (static_cast<std::string>(argv[1]) == "-n")
+		{
 			modelName = static_cast<std::string>(argv[2]);
-		} else {
+		} else
+		{
 			validArgs = false;
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
 
-		if (validArgs) {
+		if (validArgs)
+		{
 			Model2 model2(modelName, "Test Model 2");
-			try {
+			try
+			{
 				model2.run();
 
-			} catch (zmq::error_t& e) {
+			} catch (zmq::error_t& e)
+			{
 				std::cerr << modelName + ": Interrupt received: Exit"
 						<< std::endl;
 			}
 		}
-	} else if (argc > 1) {
-		if (static_cast<std::string>(argv[1]) == "--help") {
+	} else if (argc > 1)
+	{
+		if (static_cast<std::string>(argv[1]) == "--help")
+		{
 			std::cout << "<< Help >>" << std::endl;
 			std::cout << "-n NAME >> " << "Set instance name of Model2"
 					<< std::endl;
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else {
+	} else
+	{
 		std::cout << " Invalid or missing argument/s: --help" << std::endl;
 	}
 

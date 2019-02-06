@@ -36,7 +36,8 @@
 
 class Queue: public virtual IModel,
 		public virtual IPersist,
-		public virtual IQueue {
+		public virtual IQueue
+{
 
 public:
 	Queue(std::string name, std::string description);
@@ -46,10 +47,12 @@ public:
 	virtual void init() override;
 	virtual bool prepare() override;
 	virtual void run() override;
-	virtual std::string getName() const override {
+	virtual std::string getName() const override
+	{
 		return mName;
 	}
-	virtual std::string getDescription() const override {
+	virtual std::string getDescription() const override
+	{
 		return mDescription;
 	}
 
@@ -70,7 +73,8 @@ private:
 
 	friend class boost::serialization::access;
 	template<typename Archive>
-	void serialize(Archive& archive, const unsigned int) {
+	void serialize(Archive& archive, const unsigned int)
+	{
 		archive & boost::serialization::make_nvp("EventSet", mEventSet);
 	}
 

@@ -13,28 +13,38 @@
 
 #include "Logger.h"
 
-int main(int argc, const char * argv[]) {
-	if (argc > 2) {
-		if (static_cast<std::string>(argv[1]) == "--log-files-path") {
+int main(int argc, const char * argv[])
+{
+	if (argc > 2)
+	{
+		if (static_cast<std::string>(argv[1]) == "--log-files-path")
+		{
 			Logger logger("logger", "Log messages to the log file", argv[2]);
-			try {
+			try
+			{
 				logger.run();
 
-			} catch (zmq::error_t& e) {
+			} catch (zmq::error_t& e)
+			{
 				std::cerr << "Logger: Interrupt received: Exit" << std::endl;
 			}
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else if (argc > 1) {
-		if (static_cast<std::string>(argv[1]) == "--help") {
+	} else if (argc > 1)
+	{
+		if (static_cast<std::string>(argv[1]) == "--help")
+		{
 			std::cout << "<< Help >>" << std::endl;
 			std::cout << "--log-files-path LOG-FILES-PATH >> "
 					<< "Save log-files in LOG-FILES-PATH" << std::endl;
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else {
+	} else
+	{
 		std::cout << " Invalid or missing argument/s: --help" << std::endl;
 	}
 

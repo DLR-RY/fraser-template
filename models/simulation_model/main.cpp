@@ -16,31 +16,40 @@
 
 #include "SimulationModel.h"
 
-int main(int argc, char* argv[]) {
-	if (argc > 2) {
+int main(int argc, char* argv[])
+{
+	if (argc > 2)
+	{
 		std::string configFilePath = argv[2];
 		SimulationModel simulation("simulation_model",
 				"Simulation Environment");
 
-		if (static_cast<std::string>(argv[1]) == "--create-config-files") {
+		if (static_cast<std::string>(argv[1]) == "--create-config-files")
+		{
 			simulation.setConfigMode(true);
 			simulation.saveState(configFilePath);
 
-		} else if (static_cast<std::string>(argv[1]) == "--load-config") {
+		} else if (static_cast<std::string>(argv[1]) == "--load-config")
+		{
 			simulation.loadState(configFilePath);
-			try {
+			try
+			{
 				simulation.run();
 
-			} catch (zmq::error_t& e) {
+			} catch (zmq::error_t& e)
+			{
 				std::cerr << "Simulation Model: Interrupt received: Exit"
 						<< std::endl;
 			}
 
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else if (argc > 1) {
-		if (static_cast<std::string>(argv[1]) == "--help") {
+	} else if (argc > 1)
+	{
+		if (static_cast<std::string>(argv[1]) == "--help")
+		{
 			std::cout << "<< Help >>" << std::endl;
 			std::cout << "--create-config-files CONFIG-PATH >> "
 					<< "Create default configuration files with initialized "
@@ -48,10 +57,12 @@ int main(int argc, char* argv[]) {
 			std::cout
 					<< "--load-config CONFIG-PATH >> Define path of configuration file/s"
 					<< std::endl;
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else {
+	} else
+	{
 		std::cout << " Invalid argument/s: --help" << std::endl;
 	}
 

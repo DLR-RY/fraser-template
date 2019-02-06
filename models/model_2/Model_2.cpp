@@ -16,32 +16,39 @@
 
 Model2::Model2(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
-				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0) {
+				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0)
+{
 
 	registerInterruptSignal();
 	mRun = prepare();
 	init();
 }
 
-void Model2::init() {
+void Model2::init()
+{
 	// Set or calculate other parameters ...
 }
 
-bool Model2::prepare() {
+bool Model2::prepare()
+{
 	mSubscriber.setOwnershipName(mName);
 
-	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName))) {
+	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName)))
+	{
 		return false;
 	}
 
 	if (!mSubscriber.connectToPub(mDealer.getIPFrom("simulation_model"),
-			mDealer.getPortNumFrom("simulation_model"))) {
+			mDealer.getPortNumFrom("simulation_model")))
+	{
 		return false;
 	}
 
-	for (auto depModel : mDealer.getModelDependencies()) {
+	for (auto depModel : mDealer.getModelDependencies())
+	{
 		if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
-				mDealer.getPortNumFrom(depModel))) {
+				mDealer.getPortNumFrom(depModel)))
+		{
 			return false;
 		}
 	}
@@ -55,26 +62,32 @@ bool Model2::prepare() {
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
 			mDealer.getIPFrom("simulation_model"),
-			mDealer.getSynchronizationPort())) {
+			mDealer.getSynchronizationPort()))
+	{
 		return false;
 	}
 
-	if (!mSubscriber.synchronizeSub()) {
+	if (!mSubscriber.synchronizeSub())
+	{
 		return false;
 	}
 
 	return true;
 }
 
-void Model2::run() {
-	while (mRun) {
-		if (mSubscriber.receiveEvent()) {
+void Model2::run()
+{
+	while (mRun)
+	{
+		if (mSubscriber.receiveEvent())
+		{
 			handleEvent();
 		}
 	}
 }
 
-void Model2::handleEvent() {
+void Model2::handleEvent()
+{
 	auto eventBuffer = mSubscriber.getEventBuffer();
 
 	auto receivedEvent = event::GetEvent(eventBuffer);
@@ -86,23 +99,28 @@ void Model2::handleEvent() {
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 			mName + " received " + eventName);
 
-	if (receivedEvent->event_data() != nullptr) {
+	if (receivedEvent->event_data() != nullptr)
+	{
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
-		if (dataRef.IsString()) {
+		if (dataRef.IsString())
+		{
 			std::string configPath = dataRef.ToString();
 
-			if (eventName == "SaveState") {
+			if (eventName == "SaveState")
+			{
 				saveState(configPath + mName + ".config");
 			}
 
-			else if (eventName == "LoadState") {
+			else if (eventName == "LoadState")
+			{
 				loadState(configPath + mName + ".config");
 			}
 		}
 	}
 
-	else if (eventName == "SubsequentEvent") {
+	else if (eventName == "SubsequentEvent")
+	{
 		mPublisher.publishEvent("ReturnEvent", mCurrentSimTime);
 
 		// Log
@@ -110,19 +128,23 @@ void Model2::handleEvent() {
 				mName + " published ReturnEvent");
 	}
 
-	else if (eventName == "End") {
+	else if (eventName == "End")
+	{
 		mRun = false;
 	}
 }
 
-void Model2::saveState(std::string filePath) {
+void Model2::saveState(std::string filePath)
+{
 // Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
-	try {
+	try
+	{
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
@@ -135,14 +157,17 @@ void Model2::saveState(std::string filePath) {
 	mRun = mSubscriber.synchronizeSub();
 }
 
-void Model2::loadState(std::string filePath) {
+void Model2::loadState(std::string filePath)
+{
 // Restore states
 	std::ifstream ifs(filePath);
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
-	try {
+	try
+	{
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");

@@ -30,8 +30,8 @@
 
 #include "resources/idl/event_generated.h"
 
-class Model2: public virtual IModel,
-		public virtual IPersist {
+class Model2: public virtual IModel, public virtual IPersist
+{
 public:
 	Model2(std::string name, std::string description);
 	virtual ~Model2() = default;
@@ -41,10 +41,12 @@ public:
 	virtual bool prepare() override;
 	virtual void run() override;
 
-	virtual std::string getName() const override {
+	virtual std::string getName() const override
+	{
 		return mName;
 	}
-	virtual std::string getDescription() const override {
+	virtual std::string getDescription() const override
+	{
 		return mDescription;
 	}
 
@@ -69,7 +71,8 @@ private:
 
 	friend class boost::serialization::access;
 	template<typename Archive>
-	void serialize(Archive& archive, const unsigned int) {
+	void serialize(Archive& archive, const unsigned int)
+	{
 	}
 };
 

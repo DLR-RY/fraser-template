@@ -13,29 +13,39 @@
 
 #include "ConfigurationServer.h"
 
-int main(int argc, char* argv[]) {
-	if (argc > 2) {
-		if (static_cast<std::string>(argv[1]) == "--config-file") {
+int main(int argc, char* argv[])
+{
+	if (argc > 2)
+	{
+		if (static_cast<std::string>(argv[1]) == "--config-file")
+		{
 			ConfigurationServer configServerModel(argv[2]);
-			try {
+			try
+			{
 				configServerModel.run();
 
-			} catch (zmq::error_t& e) {
+			} catch (zmq::error_t& e)
+			{
 				std::cout << "ConfigurationServer: Interrupt received: Exit"
 						<< std::endl;
 			}
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else if (argc > 1) {
-		if (static_cast<std::string>(argv[1]) == "--help") {
+	} else if (argc > 1)
+	{
+		if (static_cast<std::string>(argv[1]) == "--help")
+		{
 			std::cout << "<< Help >>" << std::endl;
 			std::cout << "--config-file CONFIG-PATH >> "
 					<< "Set path of models-configuration file" << std::endl;
-		} else {
+		} else
+		{
 			std::cout << " Invalid argument/s: --help" << std::endl;
 		}
-	} else {
+	} else
+	{
 		std::cout << " Invalid or missing argument/s: --help" << std::endl;
 	}
 

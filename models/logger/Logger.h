@@ -42,7 +42,8 @@
 
 #include "resources/idl/event_generated.h"
 
-class Logger: public virtual IModel, public virtual IPersist {
+class Logger: public virtual IModel, public virtual IPersist
+{
 public:
 	Logger(std::string name, std::string description, std::string logFilePath);
 	virtual ~Logger() = default;
@@ -52,10 +53,12 @@ public:
 	virtual bool prepare() override;
 	virtual void run() override;
 
-	virtual std::string getName() const override {
+	virtual std::string getName() const override
+	{
 		return mName;
 	}
-	virtual std::string getDescription() const override {
+	virtual std::string getDescription() const override
+	{
 		return mDescription;
 	}
 
@@ -79,7 +82,8 @@ private:
 
 	friend class boost::serialization::access;
 	template<typename Archive>
-	void serialize(Archive& archive, const unsigned int) {
+	void serialize(Archive& archive, const unsigned int)
+	{
 		archive & boost::serialization::make_nvp("DebugMode", mDebugMode);
 	}
 

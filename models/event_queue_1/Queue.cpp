@@ -18,34 +18,41 @@
 Queue::Queue(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
 				mCtx), mDealer(mCtx, mName), mReceivedEvent(NULL), mCurrentSimTime(
-				-1) {
+				-1)
+{
 
 	registerInterruptSignal();
 	mRun = prepare();
 	init();
 }
 
-void Queue::init() {
+void Queue::init()
+{
 	// Set or calculate other parameters ...
 	mEventSet.push_back(
 			Event("FirstEvent", 500, 300, 10, Priority::NORMAL_PRIORITY));
 }
 
-bool Queue::prepare() {
+bool Queue::prepare()
+{
 	mSubscriber.setOwnershipName(mName);
 
-	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName))) {
+	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName)))
+	{
 		return false;
 	}
 
 	if (!mSubscriber.connectToPub(mDealer.getIPFrom("simulation_model"),
-			mDealer.getPortNumFrom("simulation_model"))) {
+			mDealer.getPortNumFrom("simulation_model")))
+	{
 		return false;
 	}
 
-	for (auto depModel : mDealer.getModelDependencies()) {
+	for (auto depModel : mDealer.getModelDependencies())
+	{
 		if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
-				mDealer.getPortNumFrom(depModel))) {
+				mDealer.getPortNumFrom(depModel)))
+		{
 			return false;
 		}
 	}
@@ -58,42 +65,52 @@ bool Queue::prepare() {
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
 			mDealer.getIPFrom("simulation_model"),
-			mDealer.getSynchronizationPort())) {
+			mDealer.getSynchronizationPort()))
+	{
 		return false;
 	}
 
-	if (!mSubscriber.synchronizeSub()) {
+	if (!mSubscriber.synchronizeSub())
+	{
 		return false;
 	}
 
 	return true;
 }
 
-void Queue::run() {
-	while (mRun) {
-		if (mSubscriber.receiveEvent()) {
+void Queue::run()
+{
+	while (mRun)
+	{
+		if (mSubscriber.receiveEvent())
+		{
 			handleEvent();
 		}
 	}
 }
 
-void Queue::updateEvents() {
-	if (mEventSet.back().getRepeat() != 0) {
+void Queue::updateEvents()
+{
+	if (mEventSet.back().getRepeat() != 0)
+	{
 		int timestamp = mCurrentSimTime + mEventSet.back().getPeriod();
 		mEventSet.back().setTimestamp(timestamp);
 
-		if (mEventSet.back().getRepeat() != -1) {
+		if (mEventSet.back().getRepeat() != -1)
+		{
 			mEventSet.back().setRepeat(mEventSet.back().getRepeat() - 1);
 		}
 
 		mScheduler.scheduleEvents(mEventSet);
 
-	} else {
+	} else
+	{
 		mEventSet.pop_back();
 	}
 }
 
-void Queue::handleEvent() {
+void Queue::handleEvent()
+{
 	auto eventBuffer = mSubscriber.getEventBuffer();
 
 	auto receivedEvent = event::GetEvent(eventBuffer);
@@ -101,28 +118,35 @@ void Queue::handleEvent() {
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	if (receivedEvent->event_data() != nullptr) {
+	if (receivedEvent->event_data() != nullptr)
+	{
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
-		if (dataRef.IsString()) {
+		if (dataRef.IsString())
+		{
 			std::string configPath = dataRef.ToString();
 
-			if (eventName == "SaveState") {
+			if (eventName == "SaveState")
+			{
 				saveState(configPath + mName + ".config");
 			}
 
-			else if (eventName == "LoadState") {
+			else if (eventName == "LoadState")
+			{
 				loadState(configPath + mName + ".config");
 			}
 		}
 	}
 
-	else if (eventName == "SimTimeChanged") {
+	else if (eventName == "SimTimeChanged")
+	{
 		// Send new Flit every clock cycle
-		if (!mEventSet.empty()) {
+		if (!mEventSet.empty())
+		{
 			auto nextEvent = mEventSet.back();
 
-			if (mCurrentSimTime >= nextEvent.getTimestamp()) {
+			if (mCurrentSimTime >= nextEvent.getTimestamp())
+			{
 				nextEvent.setCurrentSimTime(mCurrentSimTime);
 
 				mPublisher.publishEvent(nextEvent.getName(), mCurrentSimTime);
@@ -136,7 +160,8 @@ void Queue::handleEvent() {
 		}
 	}
 
-	else if (eventName == "End") {
+	else if (eventName == "End")
+	{
 		// Log
 		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 				mName + " received " + eventName);
@@ -145,15 +170,18 @@ void Queue::handleEvent() {
 	}
 }
 
-void Queue::saveState(std::string filePath) {
+void Queue::saveState(std::string filePath)
+{
 	// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
 
-	try {
+	try
+	{
 		oa << boost::serialization::make_nvp("EventSet", mEventSet);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
@@ -167,15 +195,18 @@ void Queue::saveState(std::string filePath) {
 	mRun = mSubscriber.synchronizeSub();
 }
 
-void Queue::loadState(std::string filePath) {
+void Queue::loadState(std::string filePath)
+{
 	// Restore states
 	std::ifstream ifs(filePath);
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
 
-	try {
+	try
+	{
 		ia >> boost::serialization::make_nvp("EventSet", mEventSet);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");

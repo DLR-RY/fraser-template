@@ -17,20 +17,24 @@
 
 ConfigurationServer::ConfigurationServer(std::string modelsConfigFilePath) :
 		mModelsConfigFilePath(modelsConfigFilePath), mCtx(1), mFrontend(mCtx,
-		ZMQ_ROUTER) {
+		ZMQ_ROUTER)
+{
 
 	registerInterruptSignal();
 	mRun = this->prepare();
 
-	if (mRun) {
+	if (mRun)
+	{
 		mModelNames = getModelNames();
 		setMinAndMaxPort();
 		setModelPortNumbers();
 		setModelIPAddresses();
 
-		try {
+		try
+		{
 			mFrontend.bind("tcp://*:" + FRONTEND_PORT);
-		} catch (std::exception &e) {
+		} catch (std::exception &e)
+		{
 			throw e.what();
 			mRun = false;
 		}
@@ -38,33 +42,41 @@ ConfigurationServer::ConfigurationServer(std::string modelsConfigFilePath) :
 	}
 }
 
-ConfigurationServer::~ConfigurationServer() {
+ConfigurationServer::~ConfigurationServer()
+{
 	mFrontend.close();
 }
 
-bool ConfigurationServer::prepare() {
+bool ConfigurationServer::prepare()
+{
 	pugi::xml_parse_result result = mDocument.load_file(
 			mModelsConfigFilePath.c_str());
 
-	if (!result) {
+	if (!result)
+	{
 		throw result.description();
 		return false;
-	} else {
+	} else
+	{
 		mRootNode = mDocument.document_element();
 		return true;
 	}
 }
 
-void ConfigurationServer::setMinAndMaxPort() {
+void ConfigurationServer::setMinAndMaxPort()
+{
 	mMinPort = mRootNode.child("Hosts").attribute("minPort").as_int();
 	mMaxPort = mRootNode.child("Hosts").attribute("maxPort").as_int();
 }
 
-bool ConfigurationServer::setModelPortNumbers() {
+bool ConfigurationServer::setModelPortNumbers()
+{
 	int portCnt = mMinPort;
 
-	for (auto name : mModelNames) {
-		if (portCnt > mMaxPort) {
+	for (auto name : mModelNames)
+	{
+		if (portCnt > mMaxPort)
+		{
 			throw "[Error] Exceeded max. port number --> Increase the interval";
 			return false;
 		}
@@ -78,17 +90,20 @@ bool ConfigurationServer::setModelPortNumbers() {
 	return true;
 }
 
-void ConfigurationServer::setModelIPAddresses() {
+void ConfigurationServer::setModelIPAddresses()
+{
 	std::string hostAddress = "";
 
-	for (auto name : mModelNames) {
+	for (auto name : mModelNames)
+	{
 		// Search for the first matching entry with the given hint attribute
 		std::string specificModelSearch = ".//Models/Model[@id='" + name + "']";
 
 		pugi::xpath_node xpathSpecificModel = mRootNode.select_single_node(
 				specificModelSearch.c_str());
 
-		if (xpathSpecificModel) {
+		if (xpathSpecificModel)
+		{
 			std::string hostID = xpathSpecificModel.node().child(
 					"HostReference").attribute("hostID").value();
 
@@ -105,7 +120,8 @@ void ConfigurationServer::setModelIPAddresses() {
 
 }
 
-int ConfigurationServer::getNumberOfModels() {
+int ConfigurationServer::getNumberOfModels()
+{
 	std::string allModelsSearch = ".//Models/Model";
 	pugi::xpath_node_set xpathAllModels = mRootNode.select_nodes(
 			allModelsSearch.c_str());
@@ -113,18 +129,21 @@ int ConfigurationServer::getNumberOfModels() {
 	return xpathAllModels.size();
 }
 
-std::string ConfigurationServer::getModelInformation(std::string request) {
+std::string ConfigurationServer::getModelInformation(std::string request)
+{
 	return mModelInformation[request];
 }
 
-int ConfigurationServer::getNumberOfPersistModels() {
+int ConfigurationServer::getNumberOfPersistModels()
+{
 	std::string allModelsSearch = ".//Models/Model[@persist='true']";
 	auto xpathAllModels = mRootNode.select_nodes(allModelsSearch.c_str());
 
 	return xpathAllModels.size();
 }
 
-std::vector<std::string> ConfigurationServer::getModelNames() {
+std::vector<std::string> ConfigurationServer::getModelNames()
+{
 	std::vector<std::string> modelNames;
 
 	std::string allModelsSearch = ".//Models/Model";
@@ -132,8 +151,10 @@ std::vector<std::string> ConfigurationServer::getModelNames() {
 	pugi::xpath_node_set xpathAllModels = mRootNode.select_nodes(
 			allModelsSearch.c_str());
 
-	if (!xpathAllModels.empty()) {
-		for (auto &modelNode : xpathAllModels) {
+	if (!xpathAllModels.empty())
+	{
+		for (auto &modelNode : xpathAllModels)
+		{
 			modelNames.push_back(modelNode.node().attribute("id").value());
 		}
 	}
@@ -141,7 +162,8 @@ std::vector<std::string> ConfigurationServer::getModelNames() {
 }
 
 std::vector<std::string> ConfigurationServer::getModelDependencies(
-		std::string modelName) {
+		std::string modelName)
+{
 	std::vector<std::string> modelDependencies;
 
 	// Search for the first matching entry with the given hint attribute
@@ -151,13 +173,15 @@ std::vector<std::string> ConfigurationServer::getModelDependencies(
 	pugi::xpath_node xpathModel = mRootNode.select_node(
 			specificModelSearch.c_str());
 
-	if (xpathModel) {
+	if (xpathModel)
+	{
 		// Search for the first matching entry with the given hint attribute
 		std::string specificModelDependSearch = ".//Dependencies/ModelReference";
 		pugi::xpath_node_set xpathModelDepends = xpathModel.node().select_nodes(
 				specificModelDependSearch.c_str());
 
-		for (auto &modelDepend : xpathModelDepends) {
+		for (auto &modelDepend : xpathModelDepends)
+		{
 			std::string modelID =
 					modelDepend.node().attribute("modelID").value();
 
@@ -168,32 +192,41 @@ std::vector<std::string> ConfigurationServer::getModelDependencies(
 	return modelDependencies;
 }
 
-void ConfigurationServer::run() {
+void ConfigurationServer::run()
+{
 
-	while (mRun) {
+	while (mRun)
+	{
 		std::string identity = s_recv(mFrontend);
 		std::string msg = s_recv(mFrontend);
 
-		if (msg == "End") {
+		if (msg == "End")
+		{
 			// Stop the configuration server
 			break;
 		}
 
 		s_sendmore(mFrontend, identity);
-		if (msg == "total_num_models") {
+		if (msg == "total_num_models")
+		{
 			s_send(mFrontend, std::to_string(getNumberOfModels()));
-		} else if (msg == "num_persist_models") {
+		} else if (msg == "num_persist_models")
+		{
 			s_send(mFrontend, std::to_string(getNumberOfPersistModels()));
-		} else if (msg == "all_model_names") {
+		} else if (msg == "all_model_names")
+		{
 			v_send(mFrontend, getModelNames());
-		} else if (msg == "model_dependencies") {
+		} else if (msg == "model_dependencies")
+		{
 			std::string sought = "_dependencies";
 			v_send(mFrontend, getModelDependencies(identity));
-		} else {
+		} else
+		{
 			s_send(mFrontend, getModelInformation(msg));
 		}
 
-		if (interruptOccured) {
+		if (interruptOccured)
+		{
 			break;
 		}
 	}

@@ -20,14 +20,16 @@
 namespace logging = boost::log;
 
 void coloringFormatter(logging::record_view const& record,
-		logging::formatting_ostream& stream) {
+		logging::formatting_ostream& stream)
+{
 
 	auto severity = record[logging::trivial::severity];
 	assert(severity);
 
 	stream << "\e[1m";
 
-	switch (severity.get()) {
+	switch (severity.get())
+	{
 	case logging::trivial::severity_level::trace:
 		stream << "\e[97m";
 		break;

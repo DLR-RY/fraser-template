@@ -25,20 +25,24 @@
 //  This is our external configuration server, which deals with requests and sends the requested IP or Port back to the client.
 //  The server can handle one request at time.
 
-class ConfigurationServer: public virtual IModel {
+class ConfigurationServer: public virtual IModel
+{
 public:
 	ConfigurationServer(std::string modelsConfigFilePath);
 	virtual ~ConfigurationServer();
 
 	// IModel
-	virtual void init() override {
+	virtual void init() override
+	{
 	}
 	virtual bool prepare() override;
 	virtual void run() override;
-	virtual std::string getName() const override {
+	virtual std::string getName() const override
+	{
 		return mName;
 	}
-	virtual std::string getDescription() const override {
+	virtual std::string getDescription() const override
+	{
 		return mDescription;
 	}
 

@@ -19,39 +19,45 @@ SimulationModel::SimulationModel(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mPublisher(mCtx), mDealer(
 				mCtx, mName), mSimTime("SimTime", 5000), mSimTimeStep(
 				"SimTimeStep", 100), mCurrentSimTime("CurrentSimTime", 0), mCycleTime(
-				"CylceTime", 0), mSpeedFactor("SpeedFactor", 1.0) {
+				"CylceTime", 0), mSpeedFactor("SpeedFactor", 1.0)
+{
 
 	registerInterruptSignal();
 	mRun = prepare();
 }
 
-SimulationModel::~SimulationModel() {
+SimulationModel::~SimulationModel()
+{
 	this->stopSim();
 }
 
-void SimulationModel::init() {
+void SimulationModel::init()
+{
 	mCycleTime.setValue(
 			double(mSimTimeStep.getValue()) / mSpeedFactor.getValue()); // Wait-time between the cycles in milliseconds
 }
 
-bool SimulationModel::prepare() {
+bool SimulationModel::prepare()
+{
 
 	mTotalNumOfModels = mDealer.getTotalNumberOfModels();
 	mNumOfPersistModels = mDealer.getNumberOfPersistModels();
 
-	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName))) {
+	if (!mPublisher.bindSocket(mDealer.getPortNumFrom(mName)))
+	{
 		return false;
 	}
 
 	// Prepare Synchronization
-	if (!mPublisher.preparePubSynchronization(
-			mDealer.getSynchronizationPort())) {
+	if (!mPublisher.preparePubSynchronization(mDealer.getSynchronizationPort()))
+	{
 		return false;
 	}
 
 	// (mTotalNumOfModels - 2), because the simulation and configuration models should not be included
 	if (!mPublisher.synchronizePub(mTotalNumOfModels - 2,
-			mCurrentSimTime.getValue())) {
+			mCurrentSimTime.getValue()))
+	{
 		return false;
 	}
 
@@ -61,11 +67,15 @@ bool SimulationModel::prepare() {
 	return true;
 }
 
-void SimulationModel::run() {
+void SimulationModel::run()
+{
 	uint64_t currentSimTime = getCurrentSimTime();
-	if (mRun) {
-		while (currentSimTime <= mSimTime.getValue()) {
-			if (!mPause) {
+	if (mRun)
+	{
+		while (currentSimTime <= mSimTime.getValue())
+		{
+			if (!mPause)
+			{
 
 				// TODO: Test to set savepoints
 //				for (auto savepoint : getSavepoints()) {
@@ -92,7 +102,8 @@ void SimulationModel::run() {
 				mCurrentSimTime.setValue(currentSimTime);
 			}
 
-			if (interruptOccured) {
+			if (interruptOccured)
+			{
 				break;
 			}
 		}
@@ -101,7 +112,8 @@ void SimulationModel::run() {
 	this->stopSim();
 }
 
-void SimulationModel::stopSim() {
+void SimulationModel::stopSim()
+{
 	// Stop all running models and the dns server
 	mPublisher.publishEvent("End", mCurrentSimTime.getValue());
 	// Wait that all models are terminated before terminating the logger
@@ -111,16 +123,19 @@ void SimulationModel::stopSim() {
 	mDealer.stopDNSserver();
 }
 
-void SimulationModel::loadState(std::string filePath) {
+void SimulationModel::loadState(std::string filePath)
+{
 	this->pauseSim();
 
 	// Restore states
 	std::ifstream ifs(filePath + mName + ".config");
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
-	try {
+	try
+	{
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		// Log
 		mPublisher.publishEvent("LogError", 0,
 				mName + ": Archive Exception during deserializing");
@@ -143,7 +158,8 @@ void SimulationModel::loadState(std::string filePath) {
 	this->continueSim();
 }
 
-void SimulationModel::saveState(std::string filePath) {
+void SimulationModel::saveState(std::string filePath)
+{
 	this->pauseSim();
 
 	// Event Data Serialization
@@ -153,10 +169,12 @@ void SimulationModel::saveState(std::string filePath) {
 	std::ofstream ofs(filePath + mName + ".config");
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
 
-	try {
+	try
+	{
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		// Log
 		mPublisher.publishEvent("LogError", 0,
 				mName + ": Archive Exception during serializing");
@@ -172,12 +190,14 @@ void SimulationModel::saveState(std::string filePath) {
 	mPublisher.publishEvent("LogInfo", 0,
 			"Synchronized simulation model with the other models (after save state phase)");
 
-	if (mConfigMode) {
+	if (mConfigMode)
+	{
 		mPublisher.publishEvent("LogInfo", 0,
 				"Default configuration files were created");
 
 		this->stopSim();
-	} else {
+	} else
+	{
 		this->continueSim();
 	}
 }

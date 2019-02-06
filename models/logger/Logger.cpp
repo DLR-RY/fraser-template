@@ -23,7 +23,8 @@ Logger::Logger(std::string name, std::string description,
 		std::string logFilePath) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mDealer(
 				mCtx, mName), mCurrentSimTime(0), mDebugMode("DebugMode",
-				false), mLogFilesPath(logFilePath) {
+				false), mLogFilesPath(logFilePath)
+{
 
 	registerInterruptSignal();
 	mRun = prepare();
@@ -39,8 +40,10 @@ Logger::Logger(std::string name, std::string description,
 	logging::add_common_attributes();
 }
 
-void Logger::init() {
-	if (mDebugMode.getValue()) {
+void Logger::init()
+{
+	if (mDebugMode.getValue())
+	{
 		typedef sinks::synchronous_sink<sinks::text_ostream_backend> text_sink;
 		boost::shared_ptr<text_sink> sink = boost::make_shared<text_sink>();
 
@@ -55,14 +58,18 @@ void Logger::init() {
 	}
 }
 
-bool Logger::prepare() {
+bool Logger::prepare()
+{
 	mSubscriber.setOwnershipName(mName);
 
 	// Connect to all models but not to itself
-	for (auto depModel : mDealer.getAllModelNames()) {
-		if (depModel != mName) {
+	for (auto depModel : mDealer.getAllModelNames())
+	{
+		if (depModel != mName)
+		{
 			if (!mSubscriber.connectToPub(mDealer.getIPFrom(depModel),
-					mDealer.getPortNumFrom(depModel))) {
+					mDealer.getPortNumFrom(depModel)))
+			{
 				return false;
 			}
 		}
@@ -81,26 +88,32 @@ bool Logger::prepare() {
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
 			mDealer.getIPFrom("simulation_model"),
-			mDealer.getSynchronizationPort())) {
+			mDealer.getSynchronizationPort()))
+	{
 		return false;
 	}
 
-	if (!mSubscriber.synchronizeSub()) {
+	if (!mSubscriber.synchronizeSub())
+	{
 		return false;
 	}
 
 	return true;
 }
 
-void Logger::run() {
-	while (mRun) {
-		if (mSubscriber.receiveEvent()) {
+void Logger::run()
+{
+	while (mRun)
+	{
+		if (mSubscriber.receiveEvent())
+		{
 			handleEvent();
 		}
 	}
 }
 
-void Logger::handleEvent() {
+void Logger::handleEvent()
+{
 	auto eventBuffer = mSubscriber.getEventBuffer();
 
 	auto receivedEvent = event::GetEvent(eventBuffer);
@@ -108,52 +121,67 @@ void Logger::handleEvent() {
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	if (receivedEvent->event_data() != nullptr) {
+	if (receivedEvent->event_data() != nullptr)
+	{
 		auto dataRef = receivedEvent->event_data_flexbuffer_root();
 
-		if (dataRef.IsString()) {
+		if (dataRef.IsString())
+		{
 			auto dataString = dataRef.ToString();
 
-			if (eventName == "SaveState") {
+			if (eventName == "SaveState")
+			{
 				saveState(dataString + mName + ".config");
-			} else if (eventName == "LoadState") {
+			} else if (eventName == "LoadState")
+			{
 				loadState(dataString + mName + ".config");
-			} else {
+			} else
+			{
 
-				if (eventName == "LogTrace") {
+				if (eventName == "LogTrace")
+				{
 					BOOST_LOG_TRIVIAL(trace)<< dataString.data();
 
-				} else if (eventName == "LogDebug") {
+				} else if (eventName == "LogDebug")
+				{
 					BOOST_LOG_TRIVIAL(debug) << dataString.data();
 
-				} else if (eventName == "LogInfo") {
+				} else if (eventName == "LogInfo")
+				{
 					BOOST_LOG_TRIVIAL(info) << dataString.data();
 
-				} else if (eventName == "LogWarning") {
+				} else if (eventName == "LogWarning")
+				{
 					BOOST_LOG_TRIVIAL(warning) << dataString.data();
 
-				} else if (eventName == "LogError") {
+				} else if (eventName == "LogError")
+				{
 					BOOST_LOG_TRIVIAL(error) << dataString.data();
 
-				} else if (eventName == "LogFatal") {
+				} else if (eventName == "LogFatal")
+				{
 					BOOST_LOG_TRIVIAL(fatal) << dataString.data();
 
 				}
 			}
 		}
-	} else if (eventName == "EndLogger") {
+	} else if (eventName == "EndLogger")
+	{
 		mRun = false;
 	}
 }
 
-void Logger::saveState(std::string filePath) {
+void Logger::saveState(std::string filePath)
+{
 	// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
-	try {
+	try
+	{
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		std::cerr << mName << "Archive exception during serialization"
 				<< std::endl;
 		throw ex.what();
@@ -162,14 +190,17 @@ void Logger::saveState(std::string filePath) {
 	mRun = mSubscriber.synchronizeSub();
 }
 
-void Logger::loadState(std::string filePath) {
+void Logger::loadState(std::string filePath)
+{
 	// Restore states
 	std::ifstream ifs(filePath);
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
-	try {
+	try
+	{
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
-	} catch (boost::archive::archive_exception& ex) {
+	} catch (boost::archive::archive_exception& ex)
+	{
 		std::cerr << mName << "Archive exception during deserialization"
 				<< std::endl;
 		throw ex.what();
