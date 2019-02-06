@@ -21,7 +21,7 @@ int main(int argc, const char * argv[]) {
 				logger.run();
 
 			} catch (zmq::error_t& e) {
-				throw "Logger: Interrupt received: Exit";
+				std::cerr << "Logger: Interrupt received: Exit" << std::endl;
 			}
 		} else {
 			std::cout << " Invalid argument/s: --help" << std::endl;

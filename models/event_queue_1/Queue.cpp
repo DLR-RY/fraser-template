@@ -20,6 +20,7 @@ Queue::Queue(std::string name, std::string description) :
 				mCtx), mDealer(mCtx, mName), mReceivedEvent(NULL), mCurrentSimTime(
 				-1) {
 
+	registerInterruptSignal();
 	mRun = prepare();
 	init();
 }
@@ -156,7 +157,6 @@ void Queue::saveState(std::string filePath) {
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
-
 		throw ex.what();
 	}
 
@@ -179,9 +179,6 @@ void Queue::loadState(std::string filePath) {
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");
-
-		std::cout << mName << ": Archive Exception during deserializing"
-				<< std::endl;
 		throw ex.what();
 	}
 

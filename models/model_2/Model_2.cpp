@@ -18,6 +18,7 @@ Model2::Model2(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
 				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0) {
 
+	registerInterruptSignal();
 	mRun = prepare();
 	init();
 }
@@ -122,10 +123,10 @@ void Model2::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during serializing");
+		throw ex.what();
 	}
 	// Log
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
@@ -142,10 +143,10 @@ void Model2::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				mName + ": Archive Exception during deserializing");
+		throw ex.what();
 	}
 	// Log
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,

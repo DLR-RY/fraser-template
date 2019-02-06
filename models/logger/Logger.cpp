@@ -25,6 +25,7 @@ Logger::Logger(std::string name, std::string description,
 				mCtx, mName), mCurrentSimTime(0), mDebugMode("DebugMode",
 				false), mLogFilesPath(logFilePath) {
 
+	registerInterruptSignal();
 	mRun = prepare();
 
 	logging::register_simple_formatter_factory<logging::trivial::severity_level,
@@ -155,7 +156,6 @@ void Logger::saveState(std::string filePath) {
 	} catch (boost::archive::archive_exception& ex) {
 		std::cerr << mName << "Archive exception during serialization"
 				<< std::endl;
-
 		throw ex.what();
 	}
 

@@ -31,7 +31,8 @@ int main(int argc, const char * argv[]) {
 				model_1.run();
 
 			} catch (zmq::error_t& e) {
-				throw modelName + ": Interrupt received: Exit";
+				std::cerr << modelName + ": Interrupt received: Exit"
+						<< std::endl;
 			}
 		}
 	} else if (argc > 1) {

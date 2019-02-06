@@ -22,7 +22,6 @@ SimulationModel::SimulationModel(std::string name, std::string description) :
 				"CylceTime", 0), mSpeedFactor("SpeedFactor", 1.0) {
 
 	registerInterruptSignal();
-
 	mRun = prepare();
 }
 
@@ -122,10 +121,10 @@ void SimulationModel::loadState(std::string filePath) {
 		ia >> boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", 0,
 				mName + ": Archive Exception during deserializing");
+		throw ex.what();
 	}
 	// Event Data Serialization
 	mPublisher.publishEvent("LoadState", mCurrentSimTime.getValue(), filePath);
@@ -158,10 +157,10 @@ void SimulationModel::saveState(std::string filePath) {
 		oa << boost::serialization::make_nvp("FieldSet", *this);
 
 	} catch (boost::archive::archive_exception& ex) {
-		throw ex.what();
 		// Log
 		mPublisher.publishEvent("LogError", 0,
 				mName + ": Archive Exception during serializing");
+		throw ex.what();
 	}
 
 	// Synchronization is necessary, because the simulation

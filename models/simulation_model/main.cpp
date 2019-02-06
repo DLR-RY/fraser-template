@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #include <iostream>
@@ -19,7 +19,8 @@
 int main(int argc, char* argv[]) {
 	if (argc > 2) {
 		std::string configFilePath = argv[2];
-		SimulationModel simulation("simulation_model", "Simulation Environment");
+		SimulationModel simulation("simulation_model",
+				"Simulation Environment");
 
 		if (static_cast<std::string>(argv[1]) == "--create-config-files") {
 			simulation.setConfigMode(true);
@@ -27,7 +28,13 @@ int main(int argc, char* argv[]) {
 
 		} else if (static_cast<std::string>(argv[1]) == "--load-config") {
 			simulation.loadState(configFilePath);
-			simulation.run();
+			try {
+				simulation.run();
+
+			} catch (zmq::error_t& e) {
+				std::cerr << "Simulation Model: Interrupt received: Exit"
+						<< std::endl;
+			}
 
 		} else {
 			std::cout << " Invalid argument/s: --help" << std::endl;

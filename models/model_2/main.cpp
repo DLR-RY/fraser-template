@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, German Aerospace Center (DLR)
+ * Copyright (c) 2017-2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,7 +8,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+ * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
  */
 
 #include "Model_2.h"
@@ -31,7 +31,8 @@ int main(int argc, char* argv[]) {
 				model2.run();
 
 			} catch (zmq::error_t& e) {
-				throw modelName + ": Interrupt received: Exit";
+				std::cerr << modelName + ": Interrupt received: Exit"
+						<< std::endl;
 			}
 		}
 	} else if (argc > 1) {
