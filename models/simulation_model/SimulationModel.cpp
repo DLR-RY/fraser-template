@@ -21,14 +21,13 @@ SimulationModel::SimulationModel(std::string name, std::string description) :
 				"SimTimeStep", 100), mCurrentSimTime("CurrentSimTime", 0), mCycleTime(
 				"CylceTime", 0), mSpeedFactor("SpeedFactor", 1.0)
 {
-
 	registerInterruptSignal();
 	mRun = prepare();
 }
 
 SimulationModel::~SimulationModel()
 {
-	this->stopSim();
+	stopSim();
 }
 
 void SimulationModel::init()
@@ -39,7 +38,6 @@ void SimulationModel::init()
 
 bool SimulationModel::prepare()
 {
-
 	mTotalNumOfModels = mDealer.getTotalNumberOfModels();
 	mNumOfPersistModels = mDealer.getNumberOfPersistModels();
 
@@ -76,6 +74,8 @@ void SimulationModel::run()
 		{
 			if (!mPause)
 			{
+				std::chrono::high_resolution_clock::time_point t1 =
+						std::chrono::high_resolution_clock::now();
 				// Log
 				mPublisher.publishEvent("LogInfo", currentSimTime,
 						"Simulation Time: " + std::to_string(currentSimTime));
@@ -102,11 +102,16 @@ void SimulationModel::run()
 					}
 				}
 
-				std::this_thread::sleep_for(
-						std::chrono::milliseconds(mCycleTime.getValue()));
-
 				currentSimTime += mSimTimeStep.getValue();
 				mCurrentSimTime.setValue(currentSimTime);
+
+				std::chrono::high_resolution_clock::time_point t2 =
+						std::chrono::high_resolution_clock::now();
+
+				auto delay = t2 - t1;
+				std::this_thread::sleep_for(
+						std::chrono::milliseconds(mCycleTime.getValue())
+								- delay);
 			}
 
 			if (interruptOccured)
@@ -123,7 +128,9 @@ void SimulationModel::stopSim()
 {
 	// Stop all running models and the dns server
 	mPublisher.publishEvent("End", mCurrentSimTime.getValue());
-	// Wait that all models are terminated before terminating the logger
+
+	// Sleep for a second to wait that all models are terminated
+	// before terminating the logger otherwise log messages could get lost.
 	sleep(1);
 	mPublisher.publishEvent("EndLogger", mCurrentSimTime.getValue());
 
