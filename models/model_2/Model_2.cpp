@@ -99,36 +99,38 @@ void Model2::handleEvent()
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 			mName + " received " + eventName);
 
-	if (receivedEvent->event_data() != nullptr)
+	if (eventName == "SaveState")
 	{
-		auto dataRef = receivedEvent->event_data_flexbuffer_root();
-
-		if (dataRef.IsString())
+		if (receivedEvent->event_data() != nullptr)
 		{
-			std::string configPath = dataRef.ToString();
-
-			if (eventName == "SaveState")
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
 			{
+				std::string configPath = dataRef.ToString();
 				saveState(configPath + mName + ".config");
 			}
+		}
 
-			else if (eventName == "LoadState")
+	} else if (eventName == "LoadState")
+	{
+		if (receivedEvent->event_data() != nullptr)
+		{
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
 			{
+				std::string configPath = dataRef.ToString();
 				loadState(configPath + mName + ".config");
 			}
 		}
-	}
 
-	else if (eventName == "SubsequentEvent")
+	} else if (eventName == "SubsequentEvent")
 	{
 		mPublisher.publishEvent("ReturnEvent", mCurrentSimTime);
 
 		// Log
 		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 				mName + " published ReturnEvent");
-	}
-
-	else if (eventName == "End")
+	} else if (eventName == "End")
 	{
 		mRun = false;
 	}
@@ -136,7 +138,7 @@ void Model2::handleEvent()
 
 void Model2::saveState(std::string filePath)
 {
-// Store states
+	// Store states
 	std::ofstream ofs(filePath);
 	boost::archive::xml_oarchive oa(ofs, boost::archive::no_header);
 	try
@@ -159,7 +161,7 @@ void Model2::saveState(std::string filePath)
 
 void Model2::loadState(std::string filePath)
 {
-// Restore states
+	// Restore states
 	std::ifstream ifs(filePath);
 	boost::archive::xml_iarchive ia(ifs, boost::archive::no_header);
 	try

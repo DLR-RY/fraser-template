@@ -118,27 +118,29 @@ void Queue::handleEvent()
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	if (receivedEvent->event_data() != nullptr)
+	if (eventName == "SaveState")
 	{
-		auto dataRef = receivedEvent->event_data_flexbuffer_root();
-
-		if (dataRef.IsString())
+		if (receivedEvent->event_data() != nullptr)
 		{
-			std::string configPath = dataRef.ToString();
-
-			if (eventName == "SaveState")
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
 			{
+				std::string configPath = dataRef.ToString();
 				saveState(configPath + mName + ".config");
 			}
-
-			else if (eventName == "LoadState")
+		}
+	} else if (eventName == "LoadState")
+	{
+		if (receivedEvent->event_data() != nullptr)
+		{
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
 			{
+				std::string configPath = dataRef.ToString();
 				loadState(configPath + mName + ".config");
 			}
 		}
-	}
-
-	else if (eventName == "SimTimeChanged")
+	} else if (eventName == "SimTimeChanged")
 	{
 		// Send new Flit every clock cycle
 		if (!mEventSet.empty())
@@ -158,9 +160,7 @@ void Queue::handleEvent()
 				this->updateEvents();
 			}
 		}
-	}
-
-	else if (eventName == "End")
+	} else if (eventName == "End")
 	{
 		// Log
 		mPublisher.publishEvent("LogInfo", mCurrentSimTime,

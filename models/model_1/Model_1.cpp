@@ -100,41 +100,40 @@ void Model1::handleEvent()
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 			mName + " received " + eventName);
 
-	if (receivedEvent->event_data() != nullptr)
+	if (eventName == "SaveState")
 	{
-		auto dataRef = receivedEvent->event_data_flexbuffer_root();
-
-		if (dataRef.IsString())
+		if (receivedEvent->event_data() != nullptr)
 		{
-			std::string configPath = dataRef.ToString();
-
-			if (eventName == "SaveState")
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
 			{
+				std::string configPath = dataRef.ToString();
 				saveState(configPath + mName + ".config");
 			}
+		}
 
-			else if (eventName == "LoadState")
+	} else if (eventName == "LoadState")
+	{
+		if (receivedEvent->event_data() != nullptr)
+		{
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
 			{
+				std::string configPath = dataRef.ToString();
 				loadState(configPath + mName + ".config");
 			}
 		}
-	}
-
-	if (eventName == "FirstEvent")
+	} else if (eventName == "FirstEvent")
 	{
 		mPublisher.publishEvent("SubsequentEvent", mCurrentSimTime);
 
 		// Log
 		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 				mName + " published SubsequentEvent");
-	}
-
-	else if (eventName == "ReturnEvent")
+	} else if (eventName == "ReturnEvent")
 	{
 		// Do something with the returned event from model 2
-	}
-
-	else if (eventName == "End")
+	} else if (eventName == "End")
 	{
 		mRun = false;
 	}
