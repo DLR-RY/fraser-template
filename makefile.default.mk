@@ -12,7 +12,7 @@ CXXFLAGS := -std=c++1y -g -Wall -DBOOST_LOG_DYN_LINK ${INCLUDES}
 LDFLAGS = -L/usr/local/lib -L/usr/lib/x86_64-linux-gnu 
 
  
-LIBS= -lzmq -lboost_log_setup -lboost_log -lboost_filesystem -lboost_serialization -lboost_system -lboost_thread -lpugixml -lpthread
+LIBS= -lzmq -lboost_log_setup -lboost_log -lboost_filesystem -lboost_serialization -lboost_system -lboost_thread -lpugixml -lpthread -luldaq
 
 vpath %.cpp $(dir $(SRCS))
 
