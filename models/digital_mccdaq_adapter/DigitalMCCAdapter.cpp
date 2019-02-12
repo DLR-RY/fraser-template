@@ -186,6 +186,13 @@ void DigitalMCCAdapter::handleEvent()
 		mError = ulDIn(mDaqDeviceHandler, THIRDPORTB, &mThirdPort);
 		mError = ulDIn(mDaqDeviceHandler, FOURTHPORTB, &mFourthPort);
 
+		// Log port data as Info
+		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+				"FirstPort: " + std::to_string(mFirstPort) + ", SecondPort: "
+						+ std::to_string(mSecondPort) + ", ThirdPort: "
+						+ std::to_string(mThirdPort) + ", FourthPort: "
+						+ std::to_string(mFourthPort));
+
 		// TODO: Then do something with the data
 
 		// TODO: Writes the specified value to a digital output port.
