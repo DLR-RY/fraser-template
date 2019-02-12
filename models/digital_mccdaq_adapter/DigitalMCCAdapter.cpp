@@ -36,12 +36,11 @@ bool DigitalMCCAdapter::prepareDaqDevice()
 {
 	unsigned int numDevs = MAX_DEV_COUNT;
 	DaqDeviceDescriptor devDescriptors[MAX_DEV_COUNT];
-	DaqDeviceHandle handle = 0;
-	UlError error = ERR_NO_ERROR;
+	mError = ERR_NO_ERROR;
 	bool deviceStatus = true;
 
 	// Get descriptors for all of the available DAQ devices
-	error = ulGetDaqDeviceInventory(USB_IFC, devDescriptors, &numDevs);
+	mError = ulGetDaqDeviceInventory(USB_IFC, devDescriptors, &numDevs);
 
 	// verify at least one DAQ device is detected
 	if (numDevs)
@@ -52,26 +51,32 @@ bool DigitalMCCAdapter::prepareDaqDevice()
 						+ std::string(devDescriptors[0].uniqueId) + ")");
 
 		// get a handle to the DAQ device associated with the first descriptor
-		handle = ulCreateDaqDevice(devDescriptors[0]);
+		mDaqDeviceHandler = ulCreateDaqDevice(devDescriptors[0]);
 
 		// check if the DAQ device handle is valid
-		if (handle)
+		if (mDaqDeviceHandler)
 		{
 
 			// establish a connection to the DAQ device
-			error = ulConnectDaqDevice(handle);
+			mError = ulConnectDaqDevice(mDaqDeviceHandler);
 
-			if (error == ERR_NO_ERROR)
+			if (mError == ERR_NO_ERROR)
 			{
-				error = ulDConfigPort(handle, FIRSTPORTA, DD_OUTPUT);
-				error = ulDConfigPort(handle, SECONDPORTA, DD_OUTPUT);
-				error = ulDConfigPort(handle, THIRDPORTA, DD_OUTPUT);
-				error = ulDConfigPort(handle, FOURTHPORTA, DD_OUTPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, FIRSTPORTA,
+						DD_OUTPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, SECONDPORTA,
+						DD_OUTPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, THIRDPORTA,
+						DD_OUTPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, FOURTHPORTA,
+						DD_OUTPUT);
 
-				error = ulDConfigPort(handle, FIRSTPORTB, DD_INPUT);
-				error = ulDConfigPort(handle, SECONDPORTB, DD_INPUT);
-				error = ulDConfigPort(handle, THIRDPORTB, DD_INPUT);
-				error = ulDConfigPort(handle, FOURTHPORTB, DD_INPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, FIRSTPORTB, DD_INPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, SECONDPORTB,
+						DD_INPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, THIRDPORTB, DD_INPUT);
+				mError = ulDConfigPort(mDaqDeviceHandler, FOURTHPORTB,
+						DD_INPUT);
 			}
 		}
 	} else
@@ -83,14 +88,14 @@ bool DigitalMCCAdapter::prepareDaqDevice()
 		deviceStatus = false;
 	}
 
-	if (error != ERR_NO_ERROR)
+	if (mError != ERR_NO_ERROR)
 	{
 		char errMsg[ERR_MSG_LEN];
-		ulGetErrMsg(error, errMsg);
+		ulGetErrMsg(mError, errMsg);
 
 		mPublisher.publishEvent("LogError", mCurrentSimTime,
 				"UL DAQ Error Message: " + std::string(errMsg) + "(Error Code "
-						+ std::to_string(error) + ")");
+						+ std::to_string(mError) + ")");
 
 		deviceStatus = false;
 	}
@@ -122,9 +127,16 @@ bool DigitalMCCAdapter::prepare()
 		}
 	}
 
+	mSubscriber.subscribeTo("SimTimeChanged");
 	mSubscriber.subscribeTo("LoadState");
 	mSubscriber.subscribeTo("SaveState");
 	mSubscriber.subscribeTo("End");
+
+	// TODO: subscribe to port group messages, e.g.:
+	// mSubscriber.subscribeTo("FirstPort");
+	// mSubscriber.subscribeTo("SecondPort");
+	// mSubscriber.subscribeTo("ThirdPort");
+	// mSubscriber.subscribeTo("FourthPort");
 
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
@@ -162,11 +174,27 @@ void DigitalMCCAdapter::handleEvent()
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	// Log
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
 			mName + " received " + eventName);
 
-	if (eventName == "SaveState")
+	// Do something every simulation cycle
+	if (eventName == "SimTimeChanged")
+	{
+		// Returns the value read from a digital port.
+		mError = ulDIn(mDaqDeviceHandler, FIRSTPORTB, &mFirstPort);
+		mError = ulDIn(mDaqDeviceHandler, SECONDPORTB, &mSecondPort);
+		mError = ulDIn(mDaqDeviceHandler, THIRDPORTB, &mThirdPort);
+		mError = ulDIn(mDaqDeviceHandler, FOURTHPORTB, &mFourthPort);
+
+		// TODO: Then do something with the data
+
+		// TODO: Writes the specified value to a digital output port.
+		mError = ulDOut(mDaqDeviceHandler, FIRSTPORTA, 32);
+		mError = ulDOut(mDaqDeviceHandler, SECONDPORTA, 5);
+		mError = ulDOut(mDaqDeviceHandler, THIRDPORTA, 11);
+		mError = ulDOut(mDaqDeviceHandler, FOURTHPORTA, 98);
+
+	} else if (eventName == "SaveState")
 	{
 		if (receivedEvent->event_data() != nullptr)
 		{

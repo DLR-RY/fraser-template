@@ -29,7 +29,6 @@
 #include "interfaces/IPersist.h"
 #include "data-types/Field.h"
 
-
 #include "resources/idl/event_generated.h"
 
 class DigitalMCCAdapter: public virtual IModel, public virtual IPersist
@@ -72,6 +71,12 @@ private:
 	int mCurrentSimTime;
 
 	bool prepareDaqDevice();
+	DaqDeviceHandle mDaqDeviceHandler;
+	UlError mError = ERR_NO_ERROR;
+	unsigned long long mFirstPort = 0;
+	unsigned long long mSecondPort = 0;
+	unsigned long long mThirdPort = 0;
+	unsigned long long mFourthPort = 0;
 
 	friend class boost::serialization::access;
 	template<typename Archive>
