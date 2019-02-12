@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="../fraser/schemas/models-config.xsd">
+
+	<!-- Port numbers p∈Z|minPort≤x≤maxPort) are automatically assigned -->
+	<Hosts minPort="6000" maxPort="6100">
+		<Host id="host_0">
+			<Description>PC in room 2.21</Description>
+			<Address>localhost</Address>
+		</Host>
+		<!-- Add more hosts for a distributed simulation -->
+	</Hosts>
+
+	<!-- [configPath]: Define the configuration path for the models -->
+	<!-- The folder contains files with the initialized state of each persistent 
+		model -->
+	<Models configPath="../configurations/config_0">
+
+		<!-- Do not remove this model! -->
+		<!-- Model is part of the environment -->
+		<Model id="configuration_server"
+			path="../models/configuration_server">
+			<HostReference hostID="host_0" />
+		</Model>
+
+		<!-- Do not remove this model! -->
+		<!-- Model is part of the environment -->
+		<Model persist="true" id="simulation_model"
+			path="../models/simulation_model">
+			<HostReference hostID="host_0" />
+		</Model>
+
+		<!-- Do not remove this model! -->
+		<!-- Model is part of the environment -->
+		<Model persist="true" id="logger" path="../models/logger">
+			<HostReference hostID="host_0" />
+		</Model>
+
+		<!-- Add your Custom Models -->
+		<!-- [type]: name of the folder within the models-folder -->
+		<!-- [id]: unique model identifier/name -->
+		<!-- [HostReference]: define on which host the model is executed -->
+		<!-- [Dependencies]: define the dependencies to other models -->
+		<Model persist="true" id="event_queue_1"
+			path="../models/event_queue_1">
+			<HostReference hostID="host_0" />
+		</Model>
+
+		<Model persist="true" id="model_1" path="../models/model_1">
+			<HostReference hostID="host_0" />
+			<Dependencies>
+				<ModelReference modelID="event_queue_1" />
+				<ModelReference modelID="model_2" />
+			</Dependencies>
+		</Model>
+
+		<Model persist="true" id="model_2" path="../models/model_2">
+			<HostReference hostID="host_0" />
+			<Dependencies>
+				<ModelReference modelID="event_queue_1" />
+				<ModelReference modelID="model_1" />
+			</Dependencies>
+		</Model>
+
+		<Model persist="true" id="digital_mccdaq_adapter" path="../models/digital_mccdaq_adapter">
+			<HostReference hostID="host_0" />
+			<Dependencies>
+				<ModelReference modelID="model_2" />
+			</Dependencies>
+		</Model>
+	</Models>
+</root>
+
