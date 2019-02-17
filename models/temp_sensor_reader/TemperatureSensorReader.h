@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, German Aerospace Center (DLR)
+ * Copyright (c) 2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,11 +8,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
+ * - 2019, Annika Ofenloch (DLR RY-AVS)
  */
 
-#ifndef MODEL_1_MODEL_1_H_
-#define MODEL_1_MODEL_1_H_
+#ifndef TEMP_SENSOR_READER_TEMPERATURE_SENSOR_READER_H_
+#define TEMP_SENSOR_READER_TEMPERATURE_SENSOR_READER_H_
 
 #include <fstream>
 #include <boost/serialization/serialization.hpp>
@@ -20,6 +20,7 @@
 #include <boost/archive/xml_iarchive.hpp>
 #include <zmq.hpp>
 
+#include "resources/idl/event_generated.h"
 #include "communication/zhelpers.hpp"
 #include "communication/Subscriber.h"
 #include "communication/Publisher.h"
@@ -28,13 +29,17 @@
 #include "interfaces/IPersist.h"
 #include "data-types/Field.h"
 
-#include "resources/idl/event_generated.h"
-
-class Model1: public virtual IModel, public virtual IPersist
+class TemperatureSensorReader: public virtual IModel, public virtual IPersist
 {
 public:
-	Model1(std::string name, std::string description);
-	virtual ~Model1() = default;
+	TemperatureSensorReader(std::string name, std::string description);
+	virtual ~TemperatureSensorReader() = default;
+
+	// The maximum temperature that is reached if we are HEATING long enough.
+	static constexpr int32_t maxTemperature = 10;
+
+	// The minimum temperature that is reached if we are COOLING long enough.
+	static constexpr int32_t minTemperature = -20;
 
 	// IModel
 	virtual void init() override;
@@ -69,11 +74,17 @@ private:
 	bool mRun;
 	int mCurrentSimTime;
 
+	// Temperature Sensor Reader
+	void updateTemperature();
+	Field<float> mCurrentTemperature = {"SensorTemperature", -30.0f};
+	std::string mCurrentState = "";
+	flexbuffers::Builder mFlexbuffer;
+
 	friend class boost::serialization::access;
 	template<typename Archive>
 	void serialize(Archive& archive, const unsigned int)
 	{
-
+		archive & boost::serialization::make_nvp("FloatField", mCurrentTemperature);
 	}
 };
 

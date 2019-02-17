@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, German Aerospace Center (DLR)
+ * Copyright (c) 2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,10 +8,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
+ * - 2019, Annika Ofenloch (DLR RY-AVS)
  */
 
-#include "Model_2.h"
+#include "../thermal_controller/ThermalController.h"
 
 int main(int argc, char* argv[])
 {
@@ -31,10 +31,10 @@ int main(int argc, char* argv[])
 
 		if (validArgs)
 		{
-			Model2 model2(modelName, "Test Model 2");
+			ThermalController thermalController(modelName, "Controls the temperature of the system.");
 			try
 			{
-				model2.run();
+				thermalController.run();
 
 			} catch (zmq::error_t& e)
 			{

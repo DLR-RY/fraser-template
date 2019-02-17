@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018, German Aerospace Center (DLR)
+# Copyright (c) 2019, German Aerospace Center (DLR)
 #
 # This file is part of the development version of FRASER.
 #
@@ -7,9 +7,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Authors:
-# - 2017-2018, Annika Ofenloch (DLR RY-AVS)
+# - 2019, Annika Ofenloch (DLR RY-AVS)
 
-PROG = model_2
+PROG = thermal_controller
 SRCS := $(wildcard *.cpp) \
         $(wildcard ../../fraser/src/communication/*.cpp)
 

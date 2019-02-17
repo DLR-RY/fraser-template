@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, German Aerospace Center (DLR)
+ * Copyright (c) 2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,10 +8,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
+ * - 2019, Annika Ofenloch (DLR RY-AVS)
  */
 
-#include "Model_1.h"
+#include "TemperatureSensorReader.h"
 
 int main(int argc, const char * argv[])
 {
@@ -31,10 +31,10 @@ int main(int argc, const char * argv[])
 
 		if (validArgs)
 		{
-			Model1 model_1(modelName, "Test Model 1");
+			TemperatureSensorReader tempSensorReader(modelName, "Reads out the temperature from sensor.");
 			try
 			{
-				model_1.run();
+				tempSensorReader.run();
 
 			} catch (zmq::error_t& e)
 			{

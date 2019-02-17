@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, German Aerospace Center (DLR)
+ * Copyright (c) 2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,13 +8,14 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
+ * - 2019, Annika Ofenloch (DLR RY-AVS)
  */
 
-#include <iostream>
-#include "Model_1.h"
+#include "ThermalController.h"
 
-Model1::Model1(std::string name, std::string description) :
+#include <iostream>
+
+ThermalController::ThermalController(std::string name, std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
 				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0)
 {
@@ -24,12 +25,12 @@ Model1::Model1(std::string name, std::string description) :
 	init();
 }
 
-void Model1::init()
+void ThermalController::init()
 {
 	// Set or calculate other parameters ...
 }
 
-bool Model1::prepare()
+bool ThermalController::prepare()
 {
 	mSubscriber.setOwnershipName(mName);
 
@@ -56,9 +57,7 @@ bool Model1::prepare()
 	mSubscriber.subscribeTo("LoadState");
 	mSubscriber.subscribeTo("SaveState");
 	mSubscriber.subscribeTo("End");
-	mSubscriber.subscribeTo("PCDUCommand");
-	mSubscriber.subscribeTo("FirstEvent");
-	mSubscriber.subscribeTo("ReturnEvent");
+	mSubscriber.subscribeTo("TemperatureSensor");
 
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
@@ -76,7 +75,7 @@ bool Model1::prepare()
 	return true;
 }
 
-void Model1::run()
+void ThermalController::run()
 {
 	while (mRun)
 	{
@@ -87,7 +86,7 @@ void Model1::run()
 	}
 }
 
-void Model1::handleEvent()
+void ThermalController::handleEvent()
 {
 	auto eventBuffer = mSubscriber.getEventBuffer();
 
@@ -96,11 +95,40 @@ void Model1::handleEvent()
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	// Log
-	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
-			mName + " received " + eventName);
+	if (eventName == "TemperatureSensor")
+	{
+		std::string sensorName;
+		if (receivedEvent->event_data_flexbuffer_root().IsMap())
+		{
+			auto dataRef = receivedEvent->event_data_flexbuffer_root().AsMap();
+			if (dataRef["name"].IsString())
+			{
+				sensorName = dataRef["name"].ToString();
+			}
 
-	if (eventName == "SaveState")
+			if (dataRef["temperature"].IsFloat())
+			{
+				auto sensorTemperature = dataRef["temperature"].AsFloat();
+				std::string heaterState = "Off";
+
+				if (sensorTemperature > maxTemperature)
+				{
+					heaterState = "Cooling";
+				} else if (sensorTemperature < minTemperature)
+				{
+					heaterState = "Heating";
+				}
+
+				mPublisher.publishEvent(sensorName + "HeaterState", mCurrentSimTime,
+						heaterState);
+
+				mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+						mName + ": " + sensorName + " temperature = "
+								+ std::to_string(sensorTemperature));
+			}
+		}
+
+	} else if (eventName == "SaveState")
 	{
 		if (receivedEvent->event_data() != nullptr)
 		{
@@ -123,23 +151,14 @@ void Model1::handleEvent()
 				loadState(configPath + mName + ".config");
 			}
 		}
-	} else if (eventName == "FirstEvent")
-	{
-		mPublisher.publishEvent("SubsequentEvent", mCurrentSimTime);
 
-		// Log
-		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
-				mName + " published SubsequentEvent");
-	} else if (eventName == "ReturnEvent")
-	{
-		// Do something with the returned event from model 2
 	} else if (eventName == "End")
 	{
 		mRun = false;
 	}
 }
 
-void Model1::saveState(std::string filePath)
+void ThermalController::saveState(std::string filePath)
 {
 	// Store states
 	std::ofstream ofs(filePath);
@@ -162,7 +181,7 @@ void Model1::saveState(std::string filePath)
 	mRun = mSubscriber.synchronizeSub();
 }
 
-void Model1::loadState(std::string filePath)
+void ThermalController::loadState(std::string filePath)
 {
 	// Restore states
 	std::ifstream ifs(filePath);

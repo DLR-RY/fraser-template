@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019, German Aerospace Center (DLR)
+ * Copyright (c) 2019, German Aerospace Center (DLR)
  *
  * This file is part of the development version of FRASER.
  *
@@ -8,13 +8,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Authors:
- * - 2017-2019, Annika Ofenloch (DLR RY-AVS)
+ * - 2019, Annika Ofenloch (DLR RY-AVS)
  */
 
-#include <iostream>
-#include "Model_2.h"
+#include "TemperatureSensorReader.h"
 
-Model2::Model2(std::string name, std::string description) :
+#include <iostream>
+
+TemperatureSensorReader::TemperatureSensorReader(std::string name,
+		std::string description) :
 		mName(name), mDescription(description), mCtx(1), mSubscriber(mCtx), mPublisher(
 				mCtx), mDealer(mCtx, mName), mCurrentSimTime(0)
 {
@@ -24,12 +26,12 @@ Model2::Model2(std::string name, std::string description) :
 	init();
 }
 
-void Model2::init()
+void TemperatureSensorReader::init()
 {
 	// Set or calculate other parameters ...
 }
 
-bool Model2::prepare()
+bool TemperatureSensorReader::prepare()
 {
 	mSubscriber.setOwnershipName(mName);
 
@@ -56,8 +58,8 @@ bool Model2::prepare()
 	mSubscriber.subscribeTo("LoadState");
 	mSubscriber.subscribeTo("SaveState");
 	mSubscriber.subscribeTo("End");
-	mSubscriber.subscribeTo("PCDUCommand");
-	mSubscriber.subscribeTo("SubsequentEvent");
+	mSubscriber.subscribeTo("SimTimeChanged");
+	mSubscriber.subscribeTo(mName + "HeaterState");
 
 	// Synchronization
 	if (!mSubscriber.prepareSubSynchronization(
@@ -75,7 +77,7 @@ bool Model2::prepare()
 	return true;
 }
 
-void Model2::run()
+void TemperatureSensorReader::run()
 {
 	while (mRun)
 	{
@@ -86,7 +88,7 @@ void Model2::run()
 	}
 }
 
-void Model2::handleEvent()
+void TemperatureSensorReader::handleEvent()
 {
 	auto eventBuffer = mSubscriber.getEventBuffer();
 
@@ -95,11 +97,34 @@ void Model2::handleEvent()
 	mCurrentSimTime = receivedEvent->timestamp();
 	mRun = !foundCriticalSimCycle(mCurrentSimTime);
 
-	// Log
-	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
-			mName + " received " + eventName);
+	if (eventName == "SimTimeChanged")
+	{
+		updateTemperature();
 
-	if (eventName == "SaveState")
+		// Publish current temperature
+		mFlexbuffer.Clear();
+		mFlexbuffer.Map([&]()
+		{
+			mFlexbuffer.String("name", mName);
+			mFlexbuffer.Float("temperature", mCurrentTemperature.getValue());
+
+		});
+		mFlexbuffer.Finish();
+
+		mPublisher.publishEvent("TemperatureSensor", mCurrentSimTime,
+				mFlexbuffer.GetBuffer());
+
+	} else if (eventName == (mName + "HeaterState"))
+	{
+		if (receivedEvent->event_data() != nullptr)
+		{
+			auto dataRef = receivedEvent->event_data_flexbuffer_root();
+			if (dataRef.IsString())
+			{
+				mCurrentState = dataRef.ToString();
+			}
+		}
+	} else if (eventName == "SaveState")
 	{
 		if (receivedEvent->event_data() != nullptr)
 		{
@@ -122,21 +147,35 @@ void Model2::handleEvent()
 				loadState(configPath + mName + ".config");
 			}
 		}
-
-	} else if (eventName == "SubsequentEvent")
-	{
-		mPublisher.publishEvent("ReturnEvent", mCurrentSimTime);
-
-		// Log
-		mPublisher.publishEvent("LogInfo", mCurrentSimTime,
-				mName + " published ReturnEvent");
 	} else if (eventName == "End")
 	{
 		mRun = false;
 	}
 }
 
-void Model2::saveState(std::string filePath)
+void TemperatureSensorReader::updateTemperature()
+{
+	// A function that models reading the temperature from the sensor. It
+	// updates the temperature since the last poll and returns the value,
+	// but with an additional measurement error:
+	auto sensorTemperature = mCurrentTemperature.getValue();
+
+	if (mCurrentState == "Heating")
+	{
+		mCurrentTemperature.setValue(sensorTemperature + 0.5f);
+	} else if (mCurrentState == "Cooling")
+	{
+		mCurrentTemperature.setValue(sensorTemperature - 0.5f);
+	}
+	// if the controller is in the state OFF, then the temperature does not
+	// change.
+
+	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
+			mName + " temperature: "
+					+ std::to_string(mCurrentTemperature.getValue()));
+}
+
+void TemperatureSensorReader::saveState(std::string filePath)
 {
 	// Store states
 	std::ofstream ofs(filePath);
@@ -159,7 +198,7 @@ void Model2::saveState(std::string filePath)
 	mRun = mSubscriber.synchronizeSub();
 }
 
-void Model2::loadState(std::string filePath)
+void TemperatureSensorReader::loadState(std::string filePath)
 {
 	// Restore states
 	std::ifstream ifs(filePath);
