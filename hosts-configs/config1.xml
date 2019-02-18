@@ -37,8 +37,8 @@
 		</Model>
 
 		<!-- Add your Custom Models -->
-		<!-- [type]: name of the folder within the models-folder -->
 		<!-- [id]: unique model identifier/name -->
+		<!-- [path]: name of the folder within the models-folder -->
 		<!-- [HostReference]: define on which host the model is executed -->
 		<!-- [Dependencies]: define the dependencies to other models -->
 		<Model persist="true" id="event_queue_1"
