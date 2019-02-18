@@ -23,7 +23,7 @@
   changed_when: False
 
 - name: Run models on the hosts
-  shell: "{{ remote_home_path }}/models/{{ item.0.path | basename }}/build/bin/{{ item.0.path | basename }} -n {{ item.1 }}"
+  shell: "{{ remote_home_path }}/models/{{ item.0.path | basename }}/build/bin/* -n {{ item.1 }}"
   async: 1000
   poll: 0
   with_subelements:
