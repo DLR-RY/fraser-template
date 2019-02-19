@@ -53,6 +53,12 @@ default-configs:
 run-local:
 	ansible-playbook $(ANSIBLE_DIR)/run-local.yml --connection=local -i ./ansible/inventory/hosts
 
+debug-default-configs:
+	sh debug-scripts/create_default_configurations.sh
+
+debug-run-local:
+	sh debug-scripts/start_simulation.sh
+
 deploy:
 	ansible-playbook $(ANSIBLE_DIR)/deploy.yml -i ./ansible/inventory/hosts -e remote_home_path=$(remote_home_path)
 
