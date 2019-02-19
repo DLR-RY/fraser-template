@@ -1,27 +1,27 @@
 hosts_config_file?=config1.xml
 remote_home_path?=~/tmp_simulation
-model?=
 ANSIBLE_DIR := ansible
 
 all:
-	make configure-local
-	make update-inv
+	make prepare-localhost
+	make update
 	make configure
 	make initialize
-	make build-all
-#	make default-configs
-#	make run-local
+	make build
 
 help:
 	@echo " [LOCAL] Please use \`make <target>\` where <target> is one of"
-	@echo "  configure-local                        to configure the localhost (install dependencies just needed for the localhost)"
-	@echo "  update-inv                             to update inventory file (hosts definition) for ANSIBLE"
-	@echo "  configure                              to configure the hosts (install required dependencies for all hosts"
+	@echo "  configure                              to prepare the localhost (install dependencies)"
+	@echo "  update                                 to update inventory file (hosts definition) for ANSIBLE and debug scripts"
+	@echo "  configure                              to configure the hosts (install required dependencies for all hosts (also localhost)"
 	@echo "  initialize                             to dissolve model dependencies and generate C++ header files from the flatbuffers"
-	@echo "  build-all                              to build the models"
-	@echo "  build model=<name>                     to build a specific model"
-	@echo "  default-configs                        to create default configuration files (saved in \`configurations/config_default\`)"
+	@echo "  build                                  to build the models"
+	@echo "  create-default-configs                 to create default configuration files (saved in \`configurations/config_0\`)"
 	@echo "  run-local                              to run models on localhost"
+	@echo ""
+	@echo " [DEBUG] Please use \`make <target>\` where <target> is one of"
+	@echo "  debug-create-default-configs           to run bash script to create default configuration files (saved in \`configurations/config_0\`)"
+	@echo "  debug-run-local                        to run bash script to run models on localhost"
 	@echo ""
 	@echo " [REMOTE] Please use \`make <target>\` where <target> is one of"
 	@echo "  deploy                                 to deploy the software to the hosts (\`tmp_simulation\` folder)"
@@ -29,10 +29,10 @@ help:
 	@echo ""
 	@echo "  clean                                  to remove temporary data (\`build\` folder)"
 
-configure-local:
+prepare-localhost:
 	ansible-playbook $(ANSIBLE_DIR)/configure-local.yml --ask-become-pass --connection=local -e ansible_python_interpreter=/usr/bin/python -i ./ansible/inventory/hosts
 
-update-inv:
+update:
 	ansible-playbook $(ANSIBLE_DIR)/update-inv.yml --connection=local -e hosts_config_file=$(hosts_config_file)
 
 configure:
@@ -41,19 +41,16 @@ configure:
 initialize:
 	ansible-playbook $(ANSIBLE_DIR)/init.yml --connection=local -i ./ansible/inventory/hosts
 
-build-all:
+build:
 	ansible-playbook $(ANSIBLE_DIR)/build.yml --connection=local -i ./ansible/inventory/hosts
 
-build:
-	ansible-playbook $(ANSIBLE_DIR)/build.yml --connection=local -i ./ansible/inventory/hosts -e 'models=[{"name":"$(model)"}]'
-
-default-configs:
+create-default-configs :
 	ansible-playbook $(ANSIBLE_DIR)/default-configs.yml --connection=local -i ./ansible/inventory/hosts
 
 run-local:
 	ansible-playbook $(ANSIBLE_DIR)/run-local.yml --connection=local -i ./ansible/inventory/hosts
 
-debug-default-configs:
+debug-create-default-configs:
 	sh debug-scripts/create_default_configurations.sh
 
 debug-run-local:
