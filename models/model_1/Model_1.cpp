@@ -94,7 +94,14 @@ void Model1::handleEvent()
 	auto receivedEvent = event::GetEvent(eventBuffer);
 	std::string eventName = receivedEvent->name()->str();
 	mCurrentSimTime = receivedEvent->timestamp();
-	mRun = !foundCriticalSimCycle(mCurrentSimTime);
+
+	if (foundCriticalSimCycle(mCurrentSimTime))
+	{
+		mRun = false;
+		mPublisher.publishEvent("LogError", mCurrentSimTime,
+				mName + ": Multiple delta cycles are running. Current simulation time: "
+						+ std::to_string(mCurrentSimTime));
+	}
 
 	// Log
 	mPublisher.publishEvent("LogInfo", mCurrentSimTime,
