@@ -1,7 +1,7 @@
 #!/usr/bin/env pythonNone
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2018, German Aerospace Center (DLR)
+# Copyright (c) 2018-2019, German Aerospace Center (DLR)
 #
 # This file is part of the development version of FRASER.
 #
@@ -10,7 +10,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Authors:
-# - 2018, Annika Ofenloch (DLR RY-AVS)
+# - 2018-2019, Annika Ofenloch (DLR RY-AVS)
 
 ---
   # -----------------------------------------------------------------------
@@ -21,6 +21,7 @@
   loop:
     - "../ansible/inventory"
     - "../ansible/inventory/group_vars/all"
+    - "../debug-scripts"
     
   # Create hosts file (inventory file)
 - name: Build hosts file
@@ -36,3 +37,9 @@
 - name: Include main.yml file in group_vars/all (includes global variables)
   include_vars:
    file: "../ansible/inventory/group_vars/all/main.yml"
+   
+  # Debug scripts
+- name: Generate debug bash scripts
+  command: python3.6 ../fraser/scripts/debugBashScriptGenerator.py -f ../hosts-configs/{{hosts_config_file}} -d ../debug-scripts/
+  changed_when: False
+   
