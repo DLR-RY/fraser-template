@@ -1,7 +1,7 @@
 .autotools
 .cproject
 .settings
-ansible/init.retry
+ansible/*.retry
 .pydevproject
 .project
 /bin/
