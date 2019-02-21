@@ -60,7 +60,7 @@ deploy:
 	ansible-playbook $(ANSIBLE_DIR)/deploy.yml -i ./ansible/inventory/hosts -e remote_home_path=$(remote_home_path)
 
 run-remote:
-	ansible-playbook $(ANSIBLE_DIR)/run.yml -i ./ansible/inventory/hosts -e remote_home_path=$(remote_home_path)
+	ansible-playbook $(ANSIBLE_DIR)/run-remote.yml -i ./ansible/inventory/hosts -e remote_home_path=$(remote_home_path)
 
 list-models-info:
 	cat ansible/inventory/group_vars/all/main.yml

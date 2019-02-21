@@ -1,7 +1,7 @@
 #!/usr/bin/env pythonNone
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2018, German Aerospace Center (DLR)
+# Copyright (c) 2018-2019, German Aerospace Center (DLR)
 #
 # This file is part of the development version of FRASER.
 #
@@ -10,10 +10,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 # Authors:
-# - 2018, Annika Ofenloch (DLR RY-AVS)
+# - 2018-2019, Annika Ofenloch (DLR RY-AVS)
 
 ---
 - hosts: all
   gather_facts: no
   roles:
-    - { role: run, tags: run }
+    - { role: run-remote, tags: run-remote }
