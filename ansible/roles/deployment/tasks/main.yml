@@ -23,9 +23,9 @@
 
 - name: Copy model directory to the remote hosts
   copy:
-    src: "{{ item.path }}"
+    src: "{{ item }}"
     dest: "{{ remote_home_path }}/models"
-  loop: "{{ models }}"
+  loop: "{{ model_paths }}"
 
 - name: Check if folders exists
   file: path="{{ item }}" state=directory
@@ -35,13 +35,10 @@
 
 - name: Copy configuration file to remote hosts
   copy:
-    src: ../configurations/{{ config_path | basename }}/{{ item.1 }}.config
+    src: ../configurations/{{ config_path | basename }}/{{ item }}.config
     dest: "{{ remote_home_path }}/configurations/{{ config_path | basename }}/"
-  with_subelements:
-    - "{{ models }}"
-    - instances
-  when:
-    - 'not "configuration_server" in item.1'
+  loop: "{{ model_ids }}"
+  when: 'not "configuration_server" in item'
 
 - name: Fix 'tmp-folder' permission
   file: path=tmp_simulation owner={{ lookup('env', 'USER') }} mode=0775 state=directory recurse=yes
